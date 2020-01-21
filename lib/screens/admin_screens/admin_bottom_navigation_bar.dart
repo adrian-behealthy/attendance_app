@@ -1,8 +1,8 @@
 import 'package:attendance_app/screens/admin_screens/admin_home.dart';
 import 'package:attendance_app/screens/admin_screens/employee_time_list.dart';
 import 'package:attendance_app/screens/admin_screens/manage_screen.dart';
-import 'file:///C:/Users/Evangelista/Documents/GitHub/flutter_tutorial/attendance_app/lib/shared/setting_screen.dart';
 import 'package:attendance_app/screens/providers/bottom_navigation_bar_provider.dart';
+import 'package:attendance_app/shared/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

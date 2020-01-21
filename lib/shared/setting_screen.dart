@@ -21,6 +21,20 @@ class _SettingScreenState extends State<SettingScreen> {
           children: <Widget>[
             FlatButton.icon(
               onPressed: () {
+              },
+              icon: Icon(
+                Icons.my_location,
+                color: Theme.of(context).primaryColor,
+              ),
+              label: Text(
+                "GPS    ",
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+            FlatButton.icon(
+              onPressed: () {
                 AuthService().logout();
               },
               icon: Icon(
