@@ -18,6 +18,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   String _longitude;
   bool _isMockLocation = false;
   Timer getLocationTimer;
+  bool _isLocationEnable = false;
 
   /// initialize state.
   @override
@@ -25,6 +26,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     requestLocationPermission();
+    enableLocation();
     executeGetLocation();
   }
 
@@ -47,11 +49,13 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     } on PlatformException catch (e) {
       print('PlatformException $e');
     }
-    setState(() {
-      _latitude = position.latitude;
-      _longitude = position.longitude;
-      _isMockLocation = isMockLocation;
-    });
+    if(this.mounted) {
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _isMockLocation = isMockLocation;
+      });
+    }
   }
 
   /// request location permission at runtime.
@@ -76,61 +80,74 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    getLocationTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Trust Location Plugin'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                RaisedButton(
-                  child: Text("Time-in"),
-                  onPressed: (){},
-                  color: Theme.of(context).primaryColor,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Time-in / Time-out'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              RaisedButton(
+                child: Text(
+                  "Time-in",
+                  style: TextStyle(color: Colors.white),
                 ),
-                RaisedButton(
-                  child: Text("Time-out"),
-                  onPressed: (){},
-                  color: Colors.blue,
+                onPressed: () {},
+                color: Theme.of(context).primaryColor,
+              ),
+              RaisedButton(
+                child: Text(
+                  "Time-out",
+                  style: TextStyle(color: Colors.white),
                 ),
-                _isMockLocation
-                    ? Text(
-                        'Mock Location is used!',
-                        style: TextStyle(color: Colors.red),
-                      )
-                    : Container(),
-                _isMockLocation
-                    ? Text(
-                        "Please use the real GPS.",
-                        style: TextStyle(color: Colors.red),
-                      )
-                    : Container(),
-                !_isMockLocation
-                    ? Text('Latitude: $_latitude, Longitude: $_longitude')
-                    : Container(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: 0,
-                    itemBuilder: (context, index) {
-                      return ListTile();
-                    },
-                  ),
-                )
-              ],
-            ),
+                onPressed: () {},
+                color: Colors.blue,
+              ),
+              _isMockLocation
+                  ? Text(
+                      'Mock Location is used!',
+                      style: TextStyle(color: Colors.red),
+                    )
+                  : Container(),
+              _isMockLocation
+                  ? Text(
+                      "Please use the real GPS.",
+                      style: TextStyle(color: Colors.red),
+                    )
+                  : Container(),
+              !_isMockLocation
+                  ? Text('Latitude: $_latitude, Longitude: $_longitude')
+                  : Container(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: 0,
+                  itemBuilder: (context, index) {
+                    return ListTile();
+                  },
+                ),
+              )
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> enableLocation() async {
+    ServiceStatus serviceStatus = await LocationPermissions().checkServiceStatus();
+    _isLocationEnable = serviceStatus == ServiceStatus.enabled;
+    if(!_isLocationEnable){
+
+    }
   }
 }

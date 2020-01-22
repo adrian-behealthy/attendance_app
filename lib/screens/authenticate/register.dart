@@ -134,9 +134,12 @@ class _RegisterState extends State<Register> {
                         final result = AuthService()
                             .registerWithEmailAndPassword(email, password);
                         if (result == null) {
-                          setState(() {
-                            errorMsg = "Registration failure!";
-                          });
+
+                          if(this.mounted) {
+                            setState(() {
+                              errorMsg = "Registration failure!";
+                            });
+                          }
                           print("$errorMsg");
                         }
                       } else {

@@ -1,6 +1,5 @@
 import 'package:attendance_app/models/user.dart';
 import 'package:attendance_app/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -109,16 +108,22 @@ class _SignInState extends State<SignIn> {
                       _fbKey.currentState.save();
                       if (_fbKey.currentState.validate()) {
                         print(_fbKey.currentState.value);
-                        final email = _fbKey.currentState.value['email'].toString().trim();
-                        final password = _fbKey.currentState.value['password'].toString().trim();
+                        final email = _fbKey.currentState.value['email']
+                            .toString()
+                            .trim();
+                        final password = _fbKey.currentState.value['password']
+                            .toString()
+                            .trim();
 
                         User user = await AuthService()
                             .signInWithEmailAndPassword(email, password);
                         if (user == null) {
                           print("error in sining in");
-                          setState(() {
-                            errorMsg = "Signing failed";
-                          });
+                          if (this.mounted) {
+                            setState(() {
+                              errorMsg = "Signing failed";
+                            });
+                          }
                           return;
                         }
                       } else {
