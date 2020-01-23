@@ -27,10 +27,10 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-//    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     requestLocationPermission();
-    enableLocation();
-//    executeGetLocation();
+//    _checkGPSEnabled();
+    executeGetLocation();
   }
 
   /// calling get location every 5 seconds.
@@ -42,18 +42,33 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   /// get location method, use a try/catch PlatformException.
   Future<bool> _getLocation() async {
     LatLongPosition position;
+    bool isMockLocation = false;
     try {
+      _isLocationEnable = await _checkGPSEnabled();
+      if (!_isLocationEnable) {
+        setState(() {
+          _longitude = null;
+          _latitude = null;
+          _isMockLocation = true;
+        });
+        return false;
+      }
+
       /// query the current location.
       position = await TrustLocation.getLatLong;
 
       /// check mock location.
-      _isMockLocation = await TrustLocation.isMockLocation;
+      isMockLocation = await TrustLocation.isMockLocation;
     } on PlatformException catch (e) {
       print('PlatformException $e');
+      setState(() {
+        _isLocationEnable = false;
+      });
       return false;
     }
     if (this.mounted) {
       setState(() {
+        _isMockLocation = isMockLocation;
         _latitude = position.latitude;
         _longitude = position.longitude;
       });
@@ -75,15 +90,15 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
       executeGetLocation();
     }
     if (state == AppLifecycleState.inactive) {
-//      getLocationTimer.cancel();
+      getLocationTimer.cancel();
     }
   }
 
   /// unregister the WidgetsBindingObserver.
   @override
   void dispose() {
-//    WidgetsBinding.instance.removeObserver(this);
-//    getLocationTimer.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    getLocationTimer.cancel();
     super.dispose();
   }
 
@@ -116,7 +131,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                       SnackBar(
                         backgroundColor: Colors.redAccent,
                         content: Text(
-                          "Make sure the GPS is enabled",
+                          "Make sure the GPS is enabled and location is available",
                           textAlign: TextAlign.center,
                         ),
                         duration: Duration(seconds: 3),
@@ -141,7 +156,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                       SnackBar(
                         backgroundColor: Colors.redAccent,
                         content: Text(
-                          "Make sure the GPS is enabled",
+                          "Make sure the GPS is enabled and location is available",
                           textAlign: TextAlign.center,
                         ),
                         duration: Duration(seconds: 3),
@@ -151,7 +166,13 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                 },
                 color: Colors.blue,
               ),
-              Text('Latitude: $_latitude, Longitude: $_longitude'),
+              (_isLocationEnable)
+                  ? Text(
+                      'The locatiion is available.\nLat: $_latitude, Lng: $_longitude')
+                  : Text(
+                      "The location is not available",
+                      style: TextStyle(color: Colors.red),
+                    ),
               Expanded(
                 child: ListView.builder(
                   itemCount: 0,
@@ -248,21 +269,14 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> enableLocation() async {
-    ServiceStatus serviceStatus =
-        await LocationPermissions().checkServiceStatus();
-    _isLocationEnable = serviceStatus == ServiceStatus.enabled;
-    if (!_isLocationEnable) {}
+  Future<bool> _checkGPSEnabled() async {
+    try {
+      ServiceStatus serviceStatus =
+          await LocationPermissions().checkServiceStatus();
+      return serviceStatus == ServiceStatus.enabled;
+    } catch (e) {
+      print(e);
+      return false;
+    }
   }
 }
-
-//_scaffoldKey.currentState.removeCurrentSnackBar(),
-//                        _scaffoldKey.currentState.showSnackBar(
-//                          SnackBar(
-//                            content: Text(
-//                              /*TODO add message*/,
-//                              textAlign: TextAlign.center,
-//                            ),
-//                            duration: Duration(seconds: 3),
-//                          ),
-//                        ),

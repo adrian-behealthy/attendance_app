@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.green,
           primaryColor: Colors.green[800],
         ),
+        debugShowCheckedModeBanner: false,
         home: Wrapper(),
       ),
     );
