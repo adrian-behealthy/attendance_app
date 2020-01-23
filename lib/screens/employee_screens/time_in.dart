@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:attendance_app/models/user.dart';
 import 'package:attendance_app/services/log_db_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:location_permissions/location_permissions.dart';
@@ -181,14 +182,79 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                       "The location is not available",
                       style: TextStyle(color: Colors.red),
                     ),
+              SizedBox(
+                height: 20.0,
+              ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: 0,
-                  itemBuilder: (context, index) {
-                    return ListTile();
+                child: StreamBuilder(
+                  stream: Firestore.instance.collection("logs").snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData)
+                      return Center(
+                        child: Text("No data"),
+                      );
+                    return ListView.builder(
+                      itemCount: snapshot.data.documents.length,
+//                    itemExtent: 80.0,
+                      itemBuilder: (context, index) =>
+                          _buildList(context, snapshot.data.documents[index]),
+                    );
                   },
                 ),
-              )
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _buildList(BuildContext context, DocumentSnapshot document) {
+//    switch (_userFilter) {
+//      case UserFilter.AllNonAdminUsers:
+//        if (document["is_admin"] == true) return Container();
+//        break;
+//      case UserFilter.AllAdminUsers:
+//        if (document["is_admin"] == false) return Container();
+//        break;
+//      case UserFilter.AllActiveNonAdminUsers:
+//        if (!(document["is_admin"] == false && document["is_active"] == true))
+//          return Container();
+//        break;
+//      case UserFilter.AllNonActiveNonAdminUsers:
+//        if (!(document["is_admin"] == false && document["is_active"] == false))
+//          return Container();
+//        break;
+//      default: // All
+//    }
+
+    return Container(
+      child: Card(
+        elevation: 8.0,
+        child: ListTile(
+          title: Text(
+              "${document['project_name'] ?? ''} ; lat:${document['location'].latitude ?? ''}; lng:${document['location'].longitude ?? ''}"),
+          subtitle: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              document['is_in']
+                  ? Icon(
+                      Icons.input,
+                      color: Theme.of(context).primaryColor,
+                    )
+                  : Icon(
+                      Icons.exit_to_app,
+                      color: Colors.blue,
+                    ),
+              document['is_in']
+                  ? Text(
+                      "Time-in",
+                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    )
+                  : Text(
+                      "Time-out",
+                      style: TextStyle(color: Colors.blue),
+                    ),
             ],
           ),
         ),
