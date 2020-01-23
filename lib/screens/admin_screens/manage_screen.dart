@@ -1,4 +1,5 @@
 import 'package:attendance_app/services/management_service.dart';
+import 'package:attendance_app/services/user_db_service.dart';
 import 'package:attendance_app/shared/password_generator.dart';
 import 'package:attendance_app/shared/user_filter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,7 +13,9 @@ class ManageScreen extends StatefulWidget {
 
 class _ManageScreenState extends State<ManageScreen> {
   static final GlobalKey<FormBuilderState> _fbKey =
-  GlobalKey<FormBuilderState>();
+      GlobalKey<FormBuilderState>();
+  static final GlobalKey<FormBuilderState> _fbDialogKey =
+      GlobalKey<FormBuilderState>();
   bool isPasswordMatched = true;
   bool isPasswordHidden = true;
   String errorMsg = "";
@@ -110,9 +113,7 @@ class _ManageScreenState extends State<ManageScreen> {
                 children: <Widget>[
                   Expanded(
                     child: MaterialButton(
-                      color: Theme
-                          .of(context)
-                          .accentColor,
+                      color: Theme.of(context).accentColor,
                       child: Text(
                         "Submit",
                         style: TextStyle(color: Colors.white),
@@ -123,9 +124,9 @@ class _ManageScreenState extends State<ManageScreen> {
                         if (_fbKey.currentState.validate()) {
                           print(_fbKey.currentState.value);
                           final firstName =
-                          _fbKey.currentState.value['first_name'];
+                              _fbKey.currentState.value['first_name'];
                           final lastName =
-                          _fbKey.currentState.value['last_name'];
+                              _fbKey.currentState.value['last_name'];
 
                           final email = _fbKey.currentState.value['email'];
                           final password = PasswordGenerator.generate(8);
@@ -163,20 +164,20 @@ class _ManageScreenState extends State<ManageScreen> {
   }
 
   _buildList(BuildContext context, DocumentSnapshot document) {
-
-    switch(_userFilter){
-
+    switch (_userFilter) {
       case UserFilter.AllNonAdminUsers:
-        if(document["is_admin"] == true) return Container();
+        if (document["is_admin"] == true) return Container();
         break;
       case UserFilter.AllAdminUsers:
-        if(document["is_admin"] == false) return Container();
+        if (document["is_admin"] == false) return Container();
         break;
       case UserFilter.AllActiveNonAdminUsers:
-        if(!(document["is_admin"] == false && document["is_active"] == true)) return Container();
+        if (!(document["is_admin"] == false && document["is_active"] == true))
+          return Container();
         break;
       case UserFilter.AllNonActiveNonAdminUsers:
-        if(!(document["is_admin"] == false && document["is_active"] == false)) return Container();
+        if (!(document["is_admin"] == false && document["is_active"] == false))
+          return Container();
         break;
       default: // All
     }
@@ -187,16 +188,105 @@ class _ManageScreenState extends State<ManageScreen> {
         child: ListTile(
           title: Text(
               "${document['first_name'] ?? ''} ${document['last_name'] ?? ''}"),
-          subtitle: Text((document["is_active"] ? "Active" : "Inactive") +
-              " " +
-              (document["is_admin"] ? "Admin" : "User")),
+          subtitle: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              document["is_active"]
+                  ? Text(
+                      "Active",
+                      style: TextStyle(color: Colors.green),
+                    )
+                  : Text("Inactive", style: TextStyle(color: Colors.red)),
+              document["is_admin"]
+                  ? Text(
+                      "Admin",
+                      style: TextStyle(color: Colors.red),
+                    )
+                  : Text("User", style: TextStyle(color: Colors.blue)),
+            ],
+          ),
           trailing: IconButton(
             icon: Icon(
               Icons.edit,
-              color: Theme
-                  .of(context)
-                  .primaryColor,
+              color: Theme.of(context).primaryColor,
             ),
+            onPressed: () async {
+              final result = await showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Edit user data"),
+                    content: Container(
+                      child: FormBuilder(
+                        key: _fbDialogKey,
+                        child: Wrap(
+                          children: <Widget>[
+                            FormBuilderTextField(
+                              attribute: "first_name",
+                              initialValue: document['first_name'],
+                              keyboardType: TextInputType.text,
+                              decoration:
+                                  InputDecoration(labelText: "First name"),
+                              validators: [
+                                FormBuilderValidators.required(),
+                                FormBuilderValidators.maxLength(70),
+                              ],
+                            ),
+                            FormBuilderTextField(
+                              attribute: "last_name",
+                              initialValue: document['last_name'],
+                              keyboardType: TextInputType.text,
+                              decoration: InputDecoration(labelText: "Last name"),
+                              validators: [
+                                FormBuilderValidators.required(),
+                                FormBuilderValidators.maxLength(70),
+                              ],
+                            ),
+                            FormBuilderSwitch(
+                              attribute: "is_active",
+                              label: Text("Is active"),
+                              initialValue: document['is_active'],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: <Widget>[
+                                RaisedButton(
+                                  child: Text("Cancel"),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                RaisedButton(
+                                  color: Theme.of(context).primaryColor,
+                                  child: Text("Submit"),
+                                  onPressed: () {
+                                    _fbDialogKey.currentState.save();
+                                    if (!_fbDialogKey.currentState.validate())
+                                      return;
+
+                                    UserDbService().updateUser(
+                                        userId: document.documentID,
+                                        firstName: _fbDialogKey.currentState
+                                                .value['first_name'] ??
+                                            document['first_name'],
+                                        lastName: _fbDialogKey.currentState
+                                                .value['last_name'] ??
+                                            document['last_name'],
+                                        isActive: _fbDialogKey.currentState
+                                                .value['is_active'] ??
+                                            document['is_active']);
+                                  },
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ),
@@ -239,25 +329,5 @@ class _ManageScreenState extends State<ManageScreen> {
         isExpanded: true,
       ),
     );
-  }
-
-  _snapshotsWithFilter() {
-    switch (_userFilter) {
-      case UserFilter.All:
-        return
-          Firestore.instance.collection("users").snapshots();
-      case UserFilter.AllNonAdminUsers:
-        return
-          Firestore.instance.collection("users").snapshots();
-      case UserFilter.AllAdminUsers:
-      // TODO: Handle this case.
-        break;
-      case UserFilter.AllActiveNonAdminUsers:
-      // TODO: Handle this case.
-        break;
-      case UserFilter.AllNonActiveNonAdminUsers:
-      // TODO: Handle this case.
-        break;
-    }
   }
 }

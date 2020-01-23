@@ -23,9 +23,12 @@ class UserDbService {
   }
 
   Future updateUser(
-      {@required firstName, @required lastName, bool isActive}) async {
+      {@required String userId,
+      @required firstName,
+      @required lastName,
+      bool isActive}) async {
     bool isAdmin = false;
-    return await userCollection.document(uid).setData(
+    return await userCollection.document(userId).updateData(
       {
         'first_name': firstName,
         'last_name': lastName,
@@ -33,44 +36,5 @@ class UserDbService {
         'is_active': isActive ?? true,
       },
     );
-  }
-
-  UserData _userDataFromSnapshot(QuerySnapshot snapshot) {
-    return UserData(
-        firstName: snapshot.documents.asMap()["first_name"],
-        lastName: snapshot.documents.asMap()["last_name"],
-        isActive: snapshot.documents.asMap()['is_active'],
-        isAdmin: snapshot.documents.asMap()['is_admin']);
-  }
-
-  Stream<UserData> getUserData(UserFilter userFilter) {
-    print(userFilter);
-    switch (userFilter) {
-      case UserFilter.All:
-        print("All");
-        return userCollection.snapshots().map(_userDataFromSnapshot);
-      case UserFilter.AllNonAdminUsers:
-        print("AllnonAdminusers");
-        return userCollection
-            .snapshots()
-            .map(_userDataFromSnapshot)
-            .where((userData) => !userData.isAdmin);
-      case UserFilter.AllAdminUsers:
-        return userCollection
-            .snapshots()
-            .map(_userDataFromSnapshot)
-            .where((userData) => userData.isAdmin);
-      case UserFilter.AllActiveNonAdminUsers:
-        return userCollection
-            .snapshots()
-            .map(_userDataFromSnapshot)
-            .where((userData) => !userData.isAdmin && userData.isActive);
-      //case UserFilter.AllNonActiveNonAdminUsers:
-      default:
-        return userCollection
-            .snapshots()
-            .map(_userDataFromSnapshot)
-            .where((userData) => !userData.isAdmin && !userData.isActive);
-    }
   }
 }

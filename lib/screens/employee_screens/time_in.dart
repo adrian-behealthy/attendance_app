@@ -24,10 +24,10 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+//    WidgetsBinding.instance.addObserver(this);
     requestLocationPermission();
     enableLocation();
-    executeGetLocation();
+//    executeGetLocation();
   }
 
   /// calling get location every 5 seconds.
@@ -79,7 +79,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   /// unregister the WidgetsBindingObserver.
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+//    WidgetsBinding.instance.removeObserver(this);
     getLocationTimer.cancel();
     super.dispose();
   }
