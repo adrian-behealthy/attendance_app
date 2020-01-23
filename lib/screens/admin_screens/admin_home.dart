@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:attendance_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -6,21 +8,53 @@ class AdminHome extends StatefulWidget {
   _AdminHomeState createState() => _AdminHomeState();
 }
 
-class _AdminHomeState extends State<AdminHome> {
+class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
+  Timer getTimer;
+  DateTime currentTime = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    executeDateObserver();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Admin"),
-        actions: <Widget>[
-//          FlatButton.icon(
-//              onPressed: () {
-//                AuthService().logout();
-//              },
-//              icon: Icon(Icons.person),
-//              label: Text("Logout"))
-        ],
-      ),
-    );
+        appBar: AppBar(
+          title: Text("Today's log"),
+        ),
+        body: Text("${currentTime.toIso8601String()}"));
+  }
+
+  /// check app state resume or inactive.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      executeDateObserver();
+    }
+    if (state == AppLifecycleState.inactive) {
+      getTimer.cancel();
+    }
+  }
+
+  executeDateObserver() {
+    getTimer = Timer.periodic(Duration(seconds: 10), (Timer t) => _getDate());
+  }
+
+  Future<void> _getDate() {
+    final timeNow = DateTime.now();
+    if (timeNow.difference(currentTime).inSeconds > 0) {
+      setState(() {
+        currentTime = timeNow;
+      });
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    getTimer.cancel();
   }
 }

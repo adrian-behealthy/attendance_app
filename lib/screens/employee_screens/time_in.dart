@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:location_permissions/location_permissions.dart';
 import 'package:trust_location/trust_location.dart';
 
@@ -16,9 +17,11 @@ class TimeIn extends StatefulWidget {
 class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   String _latitude;
   String _longitude;
-  bool _isMockLocation = false;
   Timer getLocationTimer;
   bool _isLocationEnable = false;
+  static GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
+  bool _isMockLocation = true;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   /// initialize state.
   @override
@@ -37,25 +40,25 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   }
 
   /// get location method, use a try/catch PlatformException.
-  Future<void> _getLocation() async {
+  Future<bool> _getLocation() async {
     LatLongPosition position;
-    bool isMockLocation;
     try {
       /// query the current location.
       position = await TrustLocation.getLatLong;
 
       /// check mock location.
-      isMockLocation = await TrustLocation.isMockLocation;
+      _isMockLocation = await TrustLocation.isMockLocation;
     } on PlatformException catch (e) {
       print('PlatformException $e');
+      return false;
     }
-    if(this.mounted) {
+    if (this.mounted) {
       setState(() {
         _latitude = position.latitude;
         _longitude = position.longitude;
-        _isMockLocation = isMockLocation;
       });
     }
+    return true;
   }
 
   /// request location permission at runtime.
@@ -72,7 +75,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
       executeGetLocation();
     }
     if (state == AppLifecycleState.inactive) {
-      getLocationTimer.cancel();
+//      getLocationTimer.cancel();
     }
   }
 
@@ -80,13 +83,14 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   @override
   void dispose() {
 //    WidgetsBinding.instance.removeObserver(this);
-    getLocationTimer.cancel();
+//    getLocationTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Time-in / Time-out'),
       ),
@@ -102,7 +106,24 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                   "Time-in",
                   style: TextStyle(color: Colors.white),
                 ),
-                onPressed: () {},
+                onPressed: () async {
+                  final bool result = await _getLocation();
+                  if (result && !_isMockLocation) {
+                    _showLogDialog(true);
+                  } else {
+                    _scaffoldKey.currentState.removeCurrentSnackBar();
+                    _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.redAccent,
+                        content: Text(
+                          "Make sure the GPS is enabled",
+                          textAlign: TextAlign.center,
+                        ),
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
                 color: Theme.of(context).primaryColor,
               ),
               RaisedButton(
@@ -110,24 +131,27 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                   "Time-out",
                   style: TextStyle(color: Colors.white),
                 ),
-                onPressed: () {},
+                onPressed: () async {
+                  final bool result = await _getLocation();
+                  if (result && !_isMockLocation) {
+                    _showLogDialog(false);
+                  } else {
+                    _scaffoldKey.currentState.removeCurrentSnackBar();
+                    _scaffoldKey.currentState.showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.redAccent,
+                        content: Text(
+                          "Make sure the GPS is enabled",
+                          textAlign: TextAlign.center,
+                        ),
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
                 color: Colors.blue,
               ),
-              _isMockLocation
-                  ? Text(
-                      'Mock Location is used!',
-                      style: TextStyle(color: Colors.red),
-                    )
-                  : Container(),
-              _isMockLocation
-                  ? Text(
-                      "Please use the real GPS.",
-                      style: TextStyle(color: Colors.red),
-                    )
-                  : Container(),
-              !_isMockLocation
-                  ? Text('Latitude: $_latitude, Longitude: $_longitude')
-                  : Container(),
+              Text('Latitude: $_latitude, Longitude: $_longitude'),
               Expanded(
                 child: ListView.builder(
                   itemCount: 0,
@@ -143,11 +167,102 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> enableLocation() async {
-    ServiceStatus serviceStatus = await LocationPermissions().checkServiceStatus();
-    _isLocationEnable = serviceStatus == ServiceStatus.enabled;
-    if(!_isLocationEnable){
+  _showLogDialog(bool isTimeIn) {
+    return showDialog(
+      context: context,
+      builder: (builder) {
+        return AlertDialog(
+          title: Text(isTimeIn ? "Time-in" : "Time-out"),
+          content: Wrap(
+            children: <Widget>[
+              FormBuilder(
+                key: _fbKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      FormBuilderTextField(
+                        attribute: "project_name",
+                        keyboardType: TextInputType.text,
+                        maxLength: 70,
+                        decoration: InputDecoration(labelText: "Project name"),
+                        validators: [
+                          FormBuilderValidators.required(),
+                          FormBuilderValidators.maxLength(70),
+                        ],
+                      ),
+                      FormBuilderTextField(
+                        attribute: "comment",
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 5,
+                        maxLength: 240,
+                        decoration: InputDecoration(
+                          labelText: "Comment",
+                          alignLabelWithHint: true,
+                        ),
+                        validators: [
+                          FormBuilderValidators.maxLength(240),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  MaterialButton(
+                    color: Colors.grey,
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  MaterialButton(
+                    color: Theme.of(context).accentColor,
+                    child: Text(
+                      isTimeIn ? "Time-in" : "Time-out",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      _fbKey.currentState.save();
 
-    }
+                      if (_fbKey.currentState.validate()) {
+                        print(_fbKey.currentState.value);
+                      } else {
+                        print("validation failed");
+                      }
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> enableLocation() async {
+    ServiceStatus serviceStatus =
+        await LocationPermissions().checkServiceStatus();
+    _isLocationEnable = serviceStatus == ServiceStatus.enabled;
+    if (!_isLocationEnable) {}
   }
 }
+
+//_scaffoldKey.currentState.removeCurrentSnackBar(),
+//                        _scaffoldKey.currentState.showSnackBar(
+//                          SnackBar(
+//                            content: Text(
+//                              /*TODO add message*/,
+//                              textAlign: TextAlign.center,
+//                            ),
+//                            duration: Duration(seconds: 3),
+//                          ),
+//                        ),
