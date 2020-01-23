@@ -61,18 +61,19 @@ class _ManageScreenState extends State<ManageScreen> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          _showRegistrationBottomSheet();
+          _showUserDialog();
         },
       ),
     );
   }
 
-  _showRegistrationBottomSheet() {
-    return showModalBottomSheet(
+  _showUserDialog() {
+    return showDialog(
       context: context,
       builder: (builder) {
-        return Container(
-          child: ListView(
+        return AlertDialog(
+          title: Text("Add user"),
+          content: Wrap(
             children: <Widget>[
               FormBuilder(
                 key: _fbKey,
@@ -110,42 +111,50 @@ class _ManageScreenState extends State<ManageScreen> {
                 ),
               ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Expanded(
-                    child: MaterialButton(
-                      color: Theme.of(context).accentColor,
-                      child: Text(
-                        "Submit",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      onPressed: () {
-                        _fbKey.currentState.save();
-
-                        if (_fbKey.currentState.validate()) {
-                          print(_fbKey.currentState.value);
-                          final firstName =
-                              _fbKey.currentState.value['first_name'];
-                          final lastName =
-                              _fbKey.currentState.value['last_name'];
-
-                          final email = _fbKey.currentState.value['email'];
-                          final password = PasswordGenerator.generate(8);
-                          print('Password: $password');
-                          final result = ManagementService().registerNewUser(
-                              email, password, firstName, lastName);
-                          if (result == null) {
-                            if (this.mounted) {
-                              setState(() {
-                                errorMsg = "Registration failure!";
-                              });
-                            }
-                            print("$errorMsg");
-                          }
-                        } else {
-                          print("validation failed");
-                        }
-                      },
+                  MaterialButton(
+                    color: Colors.grey,
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.white),
                     ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  MaterialButton(
+                    color: Theme.of(context).accentColor,
+                    child: Text(
+                      "Submit",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      _fbKey.currentState.save();
+
+                      if (_fbKey.currentState.validate()) {
+                        print(_fbKey.currentState.value);
+                        final firstName =
+                            _fbKey.currentState.value['first_name'];
+                        final lastName = _fbKey.currentState.value['last_name'];
+
+                        final email = _fbKey.currentState.value['email'];
+                        final password = PasswordGenerator.generate(8);
+                        print('Password: $password');
+                        final result = ManagementService().registerNewUser(
+                            email, password, firstName, lastName);
+                        if (result == null) {
+                          if (this.mounted) {
+                            setState(() {
+                              errorMsg = "Registration failure!";
+                            });
+                          }
+                          print("$errorMsg");
+                        }
+                      } else {
+                        print("validation failed");
+                      }
+                    },
                   ),
                 ],
               ),
@@ -236,7 +245,8 @@ class _ManageScreenState extends State<ManageScreen> {
                               attribute: "last_name",
                               initialValue: document['last_name'],
                               keyboardType: TextInputType.text,
-                              decoration: InputDecoration(labelText: "Last name"),
+                              decoration:
+                                  InputDecoration(labelText: "Last name"),
                               validators: [
                                 FormBuilderValidators.required(),
                                 FormBuilderValidators.maxLength(70),
