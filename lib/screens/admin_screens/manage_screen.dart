@@ -214,90 +214,96 @@ class _ManageScreenState extends State<ManageScreen> {
                   : Text("User", style: TextStyle(color: Colors.blue)),
             ],
           ),
-          trailing: IconButton(
-            icon: Icon(
-              Icons.edit,
-              color: Theme.of(context).primaryColor,
-            ),
-            onPressed: () async {
-              final result = await showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text("Edit user data"),
-                    content: Container(
-                      child: FormBuilder(
-                        key: _fbDialogKey,
-                        child: Wrap(
-                          children: <Widget>[
-                            FormBuilderTextField(
-                              attribute: "first_name",
-                              initialValue: document['first_name'],
-                              keyboardType: TextInputType.text,
-                              decoration:
-                                  InputDecoration(labelText: "First name"),
-                              validators: [
-                                FormBuilderValidators.required(),
-                                FormBuilderValidators.maxLength(70),
-                              ],
-                            ),
-                            FormBuilderTextField(
-                              attribute: "last_name",
-                              initialValue: document['last_name'],
-                              keyboardType: TextInputType.text,
-                              decoration:
-                                  InputDecoration(labelText: "Last name"),
-                              validators: [
-                                FormBuilderValidators.required(),
-                                FormBuilderValidators.maxLength(70),
-                              ],
-                            ),
-                            FormBuilderSwitch(
-                              attribute: "is_active",
-                              label: Text("Is active"),
-                              initialValue: document['is_active'],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                RaisedButton(
-                                  child: Text("Cancel"),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                                RaisedButton(
-                                  color: Theme.of(context).primaryColor,
-                                  child: Text("Submit"),
-                                  onPressed: () {
-                                    _fbDialogKey.currentState.save();
-                                    if (!_fbDialogKey.currentState.validate())
-                                      return;
+          leading: document["is_admin"]
+              ? null
+              : IconButton(
+                  icon: Icon(
+                    Icons.edit,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  onPressed: () async {
+                    final result = await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text("Edit user data"),
+                          content: Container(
+                            child: FormBuilder(
+                              key: _fbDialogKey,
+                              child: Wrap(
+                                children: <Widget>[
+                                  FormBuilderTextField(
+                                    attribute: "first_name",
+                                    initialValue: document['first_name'],
+                                    keyboardType: TextInputType.text,
+                                    decoration: InputDecoration(
+                                        labelText: "First name"),
+                                    validators: [
+                                      FormBuilderValidators.required(),
+                                      FormBuilderValidators.maxLength(70),
+                                    ],
+                                  ),
+                                  FormBuilderTextField(
+                                    attribute: "last_name",
+                                    initialValue: document['last_name'],
+                                    keyboardType: TextInputType.text,
+                                    decoration:
+                                        InputDecoration(labelText: "Last name"),
+                                    validators: [
+                                      FormBuilderValidators.required(),
+                                      FormBuilderValidators.maxLength(70),
+                                    ],
+                                  ),
+                                  FormBuilderSwitch(
+                                    attribute: "is_active",
+                                    label: Text("Is active"),
+                                    initialValue: document['is_active'],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      RaisedButton(
+                                        child: Text("Cancel"),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                      RaisedButton(
+                                        color: Theme.of(context).primaryColor,
+                                        child: Text("Submit"),
+                                        onPressed: () {
+                                          _fbDialogKey.currentState.save();
+                                          if (!_fbDialogKey.currentState
+                                              .validate()) return;
 
-                                    UserDbService().updateUser(
-                                        userId: document.documentID,
-                                        firstName: _fbDialogKey.currentState
-                                                .value['first_name'] ??
-                                            document['first_name'],
-                                        lastName: _fbDialogKey.currentState
-                                                .value['last_name'] ??
-                                            document['last_name'],
-                                        isActive: _fbDialogKey.currentState
-                                                .value['is_active'] ??
-                                            document['is_active']);
-                                  },
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+                                          UserDbService().updateUser(
+                                              userId: document.documentID,
+                                              firstName: _fbDialogKey
+                                                      .currentState
+                                                      .value['first_name'] ??
+                                                  document['first_name'],
+                                              lastName: _fbDialogKey
+                                                      .currentState
+                                                      .value['last_name'] ??
+                                                  document['last_name'],
+                                              isActive: _fbDialogKey
+                                                      .currentState
+                                                      .value['is_active'] ??
+                                                  document['is_active']);
+                                        },
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
         ),
       ),
     );
