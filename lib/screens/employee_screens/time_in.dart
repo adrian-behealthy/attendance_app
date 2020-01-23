@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:attendance_app/models/user.dart';
+import 'package:attendance_app/services/log_db_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:location_permissions/location_permissions.dart';
+import 'package:provider/provider.dart';
 import 'package:trust_location/trust_location.dart';
 
 import 'package:flutter/services.dart';
@@ -104,6 +107,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<User>(context);
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -124,7 +128,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                 onPressed: () async {
                   final bool result = await _getLocation();
                   if (result && !_isMockLocation) {
-                    _showLogDialog(true);
+                    _showLogDialog(user, true);
                   } else {
                     _scaffoldKey.currentState.removeCurrentSnackBar();
                     _scaffoldKey.currentState.showSnackBar(
@@ -149,7 +153,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                 onPressed: () async {
                   final bool result = await _getLocation();
                   if (result && !_isMockLocation) {
-                    _showLogDialog(false);
+                    _showLogDialog(user, false);
                   } else {
                     _scaffoldKey.currentState.removeCurrentSnackBar();
                     _scaffoldKey.currentState.showSnackBar(
@@ -166,9 +170,13 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                 },
                 color: Colors.blue,
               ),
-              (_isLocationEnable)
-                  ? Text(
-                      'The locatiion is available.\nLat: $_latitude, Lng: $_longitude')
+              (_isLocationEnable && _longitude != null && _latitude != null)
+                  ? Column(
+                      children: <Widget>[
+                        Text('The locatiion is available.'),
+                        Text('Lat: $_latitude, Lng: $_longitude'),
+                      ],
+                    )
                   : Text(
                       "The location is not available",
                       style: TextStyle(color: Colors.red),
@@ -188,7 +196,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     );
   }
 
-  _showLogDialog(bool isTimeIn) {
+  _showLogDialog(User user, bool isTimeIn) {
     return showDialog(
       context: context,
       builder: (builder) {
@@ -247,11 +255,23 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                       isTimeIn ? "Time-in" : "Time-out",
                       style: TextStyle(color: Colors.white),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       _fbKey.currentState.save();
 
                       if (_fbKey.currentState.validate()) {
                         print(_fbKey.currentState.value);
+                        String comment =
+                            _fbKey.currentState.value['comment'] ?? '';
+                        String projectName =
+                            _fbKey.currentState.value['project_name'] ?? '';
+                        final result = await LogDbService(uid: user.uid)
+                            .addData(
+                                isIn: isTimeIn,
+                                lat: double.tryParse(_latitude),
+                                lng: double.tryParse(_longitude),
+                                comment: comment,
+                                projectName: projectName);
+                        Navigator.pop(context);
                       } else {
                         print("validation failed");
                       }

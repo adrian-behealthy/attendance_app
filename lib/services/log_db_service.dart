@@ -32,7 +32,7 @@ class LogDbService {
       @required double lat,
       @required double lng,
       String comment}) async {
-    return await logCollection.document(logId).setData({
+    return await logCollection.document(logId).updateData({
       'is_in': isIn,
       'project_name': projectName,
       'location': GeoPoint(lat, lng),
