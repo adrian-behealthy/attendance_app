@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/models/user.dart';
+import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:attendance_app/services/log_db_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -130,14 +131,26 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
         "/" +
         _currentTime.year.toString();
 
-    int fromDate =
-        (DateTime.parse("2020-01-21 15:16:46.000").millisecondsSinceEpoch /
-                1000)
-            .floor();
-    int toDate =
-        (DateTime.parse("2020-01-24 23:16:46.000").millisecondsSinceEpoch /
-                1000)
-            .floor();
+    int fromDate = (DateTime.parse("${_currentTime.year}" +
+                    "-${_currentTime.month.toString().padLeft(2, '0')}" +
+                    "-${_currentTime.day.toString().padLeft(2, '0')}")
+                .millisecondsSinceEpoch /
+            1000)
+        .floor();
+    DateTime dayAfter = _currentTime.add(Duration(days: 1));
+//    DateTime dayBefore = _currentTime.subtract(Duration(days: 1));
+//    fromDate = (DateTime.parse("${dayBefore.year}" +
+//                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
+//                    "-${dayBefore.day.toString().padLeft(2, '0')}")
+//                .millisecondsSinceEpoch /
+//            1000)
+//        .floor();
+    int toDate = (DateTime.parse("${dayAfter.year}" +
+                    "-${dayAfter.month.toString().padLeft(2, '0')}" +
+                    "-${dayAfter.day.toString().padLeft(2, '0')}")
+                .millisecondsSinceEpoch /
+            1000)
+        .floor();
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -234,7 +247,9 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
               ),
               Expanded(
                 child: StreamBuilder<List<Log>>(
-                  stream: LogDbService.logs(user.uid, fromDate, toDate),
+                  stream: LogDbHelperService(
+                          uid: user.uid, fromDate: fromDate, toDate: toDate)
+                      .logsByUid(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData)
                       return Center(
@@ -272,15 +287,6 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text("${dateTime.hour}:${dateTime.minute}"),
-//              document['is_in']
-//                  ? Icon(
-//                      Icons.input,
-//                      color: Theme.of(context).primaryColor,
-//                    )
-//                  : Icon(
-//                      Icons.exit_to_app,
-//                      color: Colors.blue,
-//                    ),
               log.isIn
                   ? Text(
                       "Time-in",
