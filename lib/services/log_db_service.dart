@@ -52,20 +52,13 @@ class LogDbService {
     final CollectionReference logCollection = firestore.collection("logs");
 
     List<Log> logList = [];
-    print(fromDate);
-    print(toDate);
-//    Stream<QuerySnapshot> filteredLogSnapshots
-    CollectionReference filteredLogs = logCollection
-//        .orderBy("seconds_since_epoch", descending: true)
+    Stream<QuerySnapshot> filteredLogs = logCollection
+        .orderBy("seconds_since_epoch", descending: true)
         .where("seconds_since_epoch",
-            isGreaterThanOrEqualTo: fromDate, isLessThanOrEqualTo: toDate);
-
-//    await logCollection.snapshots()
-    await filteredLogs
-        .snapshots()
-        .map(_logListFromSnapshot)
-        .first
-        .then((list) async {
+            isGreaterThanOrEqualTo: fromDate, isLessThanOrEqualTo: toDate)
+        .getDocuments()
+        .asStream();
+    await filteredLogs.map(_logListFromSnapshot).first.then((list) async {
       logList = await list;
     });
     if (logList.isNotEmpty) yield logList;
@@ -87,6 +80,7 @@ class LogDbService {
       final firstName = userMap[doc.data["uid"]];
       final lastName = userMap[doc.data["uid"]];
       print("timeStamp ${doc.data["seconds_since_epoch"]}");
+
       logs.add(Log(
           doc.data['uid'],
           doc.data['seconds_since_epoch'],
