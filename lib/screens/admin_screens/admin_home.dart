@@ -42,14 +42,14 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
     getTimer = Timer.periodic(Duration(seconds: 10), (Timer t) => _getDate());
   }
 
-  Future<void> _getDate() {
+  void _getDate() {
     final timeNow = DateTime.now();
     if (timeNow.difference(currentTime).inSeconds > 0) {
       setState(() {
         currentTime = timeNow;
       });
     }
-    return null;
+    return;
   }
 
   @override

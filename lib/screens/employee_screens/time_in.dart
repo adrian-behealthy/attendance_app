@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/models/user.dart';
 import 'package:attendance_app/services/log_db_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:location_permissions/location_permissions.dart';
 import 'package:provider/provider.dart';
 import 'package:trust_location/trust_location.dart';
@@ -26,6 +29,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
   static GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
   bool _isMockLocation = true;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  DateTime _currentTime = DateTime.now();
 
   /// initialize state.
   @override
@@ -45,6 +49,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
 
   /// get location method, use a try/catch PlatformException.
   Future<bool> _getLocation() async {
+    _getDate();
     LatLongPosition position;
     bool isMockLocation = false;
     try {
@@ -106,9 +111,33 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  void _getDate() {
+    final timeNow = DateTime.now();
+    if (timeNow.difference(_currentTime).inSeconds > 0) {
+      setState(() {
+        _currentTime = timeNow;
+      });
+    }
+    return;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User>(context);
+    String date = _currentTime.month.toString() +
+        "/" +
+        _currentTime.day.toString() +
+        "/" +
+        _currentTime.year.toString();
+
+    int fromDate =
+        (DateTime.parse("2020-01-21 15:16:46.000").millisecondsSinceEpoch /
+                1000)
+            .floor();
+    int toDate =
+        (DateTime.parse("2020-01-24 23:16:46.000").millisecondsSinceEpoch /
+                1000)
+            .floor();
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -121,55 +150,63 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              RaisedButton(
-                child: Text(
-                  "Time-in",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: () async {
-                  final bool result = await _getLocation();
-                  if (result && !_isMockLocation) {
-                    _showLogDialog(user, true);
-                  } else {
-                    _scaffoldKey.currentState.removeCurrentSnackBar();
-                    _scaffoldKey.currentState.showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.redAccent,
-                        content: Text(
-                          "Make sure the GPS is enabled and location is available",
-                          textAlign: TextAlign.center,
-                        ),
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-                color: Theme.of(context).primaryColor,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  RaisedButton(
+                    child: Text(
+                      "Time-in",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      final bool result = await _getLocation();
+                      if (result && !_isMockLocation) {
+                        _showLogDialog(user, true);
+                      } else {
+                        _scaffoldKey.currentState.removeCurrentSnackBar();
+                        _scaffoldKey.currentState.showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Text(
+                              "Make sure the GPS is enabled and location is available",
+                              textAlign: TextAlign.center,
+                            ),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    },
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  RaisedButton(
+                    child: Text(
+                      "Time-out",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      final bool result = await _getLocation();
+                      if (result && !_isMockLocation) {
+                        _showLogDialog(user, false);
+                      } else {
+                        _scaffoldKey.currentState.removeCurrentSnackBar();
+                        _scaffoldKey.currentState.showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.redAccent,
+                            content: Text(
+                              "Make sure the GPS is enabled and location is available",
+                              textAlign: TextAlign.center,
+                            ),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    },
+                    color: Colors.blue,
+                  ),
+                ],
               ),
-              RaisedButton(
-                child: Text(
-                  "Time-out",
-                  style: TextStyle(color: Colors.white),
-                ),
-                onPressed: () async {
-                  final bool result = await _getLocation();
-                  if (result && !_isMockLocation) {
-                    _showLogDialog(user, false);
-                  } else {
-                    _scaffoldKey.currentState.removeCurrentSnackBar();
-                    _scaffoldKey.currentState.showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.redAccent,
-                        content: Text(
-                          "Make sure the GPS is enabled and location is available",
-                          textAlign: TextAlign.center,
-                        ),
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-                color: Colors.blue,
+              SizedBox(
+                height: 10.0,
               ),
               (_isLocationEnable && _longitude != null && _latitude != null)
                   ? Column(
@@ -183,21 +220,33 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
                       style: TextStyle(color: Colors.red),
                     ),
               SizedBox(
-                height: 20.0,
+                height: 12.0,
+              ),
+              Text(
+                "Your today's activities. ($date)",
+                style: TextStyle(
+                    fontSize: Theme.of(context).primaryTextTheme.title.fontSize,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: 12.0,
               ),
               Expanded(
-                child: StreamBuilder(
-                  stream: Firestore.instance.collection("logs").snapshots(),
+                child: StreamBuilder<List<Log>>(
+                  stream: LogDbService.logs(user.uid, fromDate, toDate),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData)
                       return Center(
-                        child: Text("No data"),
+                        child: Text("No logs for today"),
                       );
+                    if (snapshot.data.length == 0) {
+                      return Text("No logs for today");
+                    }
                     return ListView.builder(
-                      itemCount: snapshot.data.documents.length,
-//                    itemExtent: 80.0,
+                      itemCount: snapshot.data.length,
                       itemBuilder: (context, index) =>
-                          _buildList(context, snapshot.data.documents[index]),
+                          _buildList(context, snapshot.data[index]),
                     );
                   },
                 ),
@@ -209,44 +258,30 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     );
   }
 
-  _buildList(BuildContext context, DocumentSnapshot document) {
-//    switch (_userFilter) {
-//      case UserFilter.AllNonAdminUsers:
-//        if (document["is_admin"] == true) return Container();
-//        break;
-//      case UserFilter.AllAdminUsers:
-//        if (document["is_admin"] == false) return Container();
-//        break;
-//      case UserFilter.AllActiveNonAdminUsers:
-//        if (!(document["is_admin"] == false && document["is_active"] == true))
-//          return Container();
-//        break;
-//      case UserFilter.AllNonActiveNonAdminUsers:
-//        if (!(document["is_admin"] == false && document["is_active"] == false))
-//          return Container();
-//        break;
-//      default: // All
-//    }
+  _buildList(BuildContext context, Log log) {
+    DateTime dateTime =
+        DateTime.fromMillisecondsSinceEpoch(log.secondSinceEpoch ?? 1 * 1000);
 
     return Container(
       child: Card(
         elevation: 8.0,
         child: ListTile(
           title: Text(
-              "${document['project_name'] ?? ''} ; lat:${document['location'].latitude ?? ''}; lng:${document['location'].longitude ?? ''}"),
+              "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
           subtitle: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              document['is_in']
-                  ? Icon(
-                      Icons.input,
-                      color: Theme.of(context).primaryColor,
-                    )
-                  : Icon(
-                      Icons.exit_to_app,
-                      color: Colors.blue,
-                    ),
-              document['is_in']
+              Text("${dateTime.hour}:${dateTime.minute}"),
+//              document['is_in']
+//                  ? Icon(
+//                      Icons.input,
+//                      color: Theme.of(context).primaryColor,
+//                    )
+//                  : Icon(
+//                      Icons.exit_to_app,
+//                      color: Colors.blue,
+//                    ),
+              log.isIn
                   ? Text(
                       "Time-in",
                       style: TextStyle(color: Theme.of(context).primaryColor),
