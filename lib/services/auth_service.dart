@@ -1,4 +1,5 @@
 import 'package:attendance_app/models/user.dart';
+import 'package:attendance_app/models/user_data.dart';
 import 'package:attendance_app/services/user_db_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

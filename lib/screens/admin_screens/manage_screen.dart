@@ -11,8 +11,6 @@ class ManageScreen extends StatefulWidget {
 }
 
 class _ManageScreenState extends State<ManageScreen> {
-  static final GlobalKey<FormBuilderState> _fbKey =
-      GlobalKey<FormBuilderState>();
   static final GlobalKey<FormBuilderState> _fbDialogKey =
       GlobalKey<FormBuilderState>();
   bool isPasswordMatched = true;

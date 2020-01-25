@@ -5,10 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 class SignIn extends StatefulWidget {
-//  final Function toggleView;
-//
-//  const SignIn({Key key, this.toggleView}) : super(key: key);
-
   @override
   _SignInState createState() => _SignInState();
 }
@@ -25,21 +21,6 @@ class _SignInState extends State<SignIn> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColor,
         title: Text('Sign-in'),
-        actions: <Widget>[
-//          FlatButton.icon(
-//            icon: Icon(
-//              Icons.person,
-//              color: Colors.white,
-//            ),
-//            label: Text(
-//              'Register',
-//              style: TextStyle(color: Colors.white),
-//            ),
-//            onPressed: () {
-//              widget.toggleView();
-//            },
-//          ),
-        ],
       ),
       body: Container(
         margin: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -67,10 +48,10 @@ class _SignInState extends State<SignIn> {
                           attribute: "password",
                           obscureText: isPasswordHidden,
                           maxLines: 1,
+                          maxLength: 32,
                           decoration: InputDecoration(labelText: "Password"),
                           validators: [
                             FormBuilderValidators.maxLength(32),
-                            FormBuilderValidators.minLength(6),
                           ],
                         ),
                       ),
@@ -82,9 +63,11 @@ class _SignInState extends State<SignIn> {
                           color: Theme.of(context).primaryColor,
                         ),
                         onPressed: () {
-                          setState(() {
-                            isPasswordHidden = !isPasswordHidden;
-                          });
+                          setState(
+                            () {
+                              isPasswordHidden = !isPasswordHidden;
+                            },
+                          );
                         },
                       ),
                     ],
@@ -120,9 +103,11 @@ class _SignInState extends State<SignIn> {
                         if (user == null) {
                           print("error in sining in");
                           if (this.mounted) {
-                            setState(() {
-                              errorMsg = "Signing failed";
-                            });
+                            setState(
+                              () {
+                                errorMsg = "Signing failed";
+                              },
+                            );
                           }
                           return;
                         }
