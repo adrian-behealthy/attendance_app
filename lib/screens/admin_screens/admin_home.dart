@@ -36,7 +36,7 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
             1000)
         .floor();
     DateTime dayAfter = _currentTime.add(Duration(days: 1));
-    //    DateTime dayBefore = _currentTime.subtract(Duration(days: 1));
+//    DateTime dayBefore = _currentTime.subtract(Duration(days: 1));
 //    fromDate = (DateTime.parse("${dayBefore.year}" +
 //                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
 //                    "-${dayBefore.day.toString().padLeft(2, '0')}")
@@ -65,7 +65,7 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
                 height: 12.0,
               ),
               Text(
-                "Your today's all activities. ($date)",
+                "Today's all activities. ($date)",
                 style: TextStyle(
                     fontSize: Theme.of(context).primaryTextTheme.title.fontSize,
                     color: Colors.blue,
@@ -103,14 +103,23 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
 
   _buildList(BuildContext context, Log log) {
     DateTime dateTime =
-        DateTime.fromMillisecondsSinceEpoch(log.secondSinceEpoch ?? 1 * 1000);
+        DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000);
 
     return Container(
       child: Card(
         elevation: 8.0,
         child: ListTile(
-          title: Text(
-              "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                "${log.firstName} ${log.lastName}",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                  "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
+            ],
+          ),
           subtitle: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
@@ -143,12 +152,12 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
   }
 
   executeDateObserver() {
-    getTimer = Timer.periodic(Duration(seconds: 10), (Timer t) => _getDate());
+    getTimer = Timer.periodic(Duration(seconds: 5), (Timer t) => _getDate());
   }
 
   void _getDate() {
     final timeNow = DateTime.now();
-    if (timeNow.difference(_currentTime).inSeconds > 0) {
+    if (timeNow.difference(_currentTime).inDays > 0) {
       setState(() {
         _currentTime = timeNow;
       });

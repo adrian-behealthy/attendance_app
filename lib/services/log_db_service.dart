@@ -1,6 +1,4 @@
-import 'package:attendance_app/models/log.dart';
-import 'package:attendance_app/models/user.dart';
-import 'package:attendance_app/models/user_data.dart';
+
 import 'package:meta/meta.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

@@ -1,6 +1,6 @@
 class Log {
   final uid;
-  final secondSinceEpoch;
+  final secondsSinceEpoch;
   final lat;
   final lng;
   final isIn;
@@ -9,7 +9,7 @@ class Log {
   final firstName;
   final lastName;
 
-  Log(this.uid, this.secondSinceEpoch, this.lat, this.lng, this.isIn,
+  Log(this.uid, this.secondsSinceEpoch, this.lat, this.lng, this.isIn,
       this.projectName, this.comment,
       {this.firstName, this.lastName});
 }

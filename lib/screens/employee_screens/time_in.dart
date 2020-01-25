@@ -7,15 +7,12 @@ import 'package:attendance_app/services/log_db_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:location_permissions/location_permissions.dart';
 import 'package:provider/provider.dart';
 import 'package:trust_location/trust_location.dart';
 
 import 'package:flutter/services.dart';
 
-//import 'package:location_permissions/location_permissions.dart';
 
 class TimeIn extends StatefulWidget {
   @override
@@ -38,7 +35,6 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     requestLocationPermission();
-//    _checkGPSEnabled();
     executeGetLocation();
   }
 
@@ -114,7 +110,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
 
   void _getDate() {
     final timeNow = DateTime.now();
-    if (timeNow.difference(_currentTime).inSeconds > 0) {
+    if (timeNow.difference(_currentTime).inDays > 0) {
       setState(() {
         _currentTime = timeNow;
       });
@@ -138,7 +134,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
             1000)
         .floor();
     DateTime dayAfter = _currentTime.add(Duration(days: 1));
-//    DateTime dayBefore = _currentTime.subtract(Duration(days: 1));
+//    DateTime dayBefore = _currentTime.subtract(Duration(days: 2));
 //    fromDate = (DateTime.parse("${dayBefore.year}" +
 //                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
 //                    "-${dayBefore.day.toString().padLeft(2, '0')}")
@@ -275,14 +271,25 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
 
   _buildList(BuildContext context, Log log) {
     DateTime dateTime =
-        DateTime.fromMillisecondsSinceEpoch(log.secondSinceEpoch ?? 1 * 1000);
+        DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000);
 
     return Container(
       child: Card(
         elevation: 8.0,
         child: ListTile(
-          title: Text(
-              "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
+          title: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                "${log.firstName} ${log.lastName}",
+                textAlign: TextAlign.left,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                  "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
+            ],
+          ),
           subtitle: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
