@@ -1,6 +1,8 @@
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:intl/intl.dart';
 
 class EmployeeActivityScreen extends StatefulWidget {
   final String uid;
@@ -13,8 +15,9 @@ class EmployeeActivityScreen extends StatefulWidget {
   _EmployeeActivityScreenState createState() => _EmployeeActivityScreenState();
 }
 
-class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
-    with WidgetsBindingObserver {
+class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
+  static final GlobalKey<FormBuilderState> _fbKey =
+      GlobalKey<FormBuilderState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   DateTime _currentTime = DateTime.now();
   int fromDateSinceEpoch;
@@ -25,12 +28,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
 
   @override
   void initState() {
-//    String date = _currentTime.month.toString() +
-//        "/" +
-//        _currentTime.day.toString() +
-//        "/" +
-//        _currentTime.year.toString();
-
     fromDate = DateTime.parse("${_currentTime.year}" +
         "-${_currentTime.month.toString().padLeft(2, '0')}" +
         "-${_currentTime.day.toString().padLeft(2, '0')}");
@@ -57,8 +54,20 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
     super.dispose();
   }
 
+  _updateDateRange() {
+    setState(() {
+      fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
+      dayAfter = _currentTime.add(Duration(days: 1));
+
+      toDateSinceEpoch =
+          (toDate.add(Duration(days: 1)).millisecondsSinceEpoch / 1000).floor();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _updateDateRange();
+    print(toDate);
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -71,15 +80,85 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                "From : $fromDate",
-                textAlign: TextAlign.left,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                "To : $toDate",
-                textAlign: TextAlign.left,
-                style: TextStyle(fontWeight: FontWeight.bold),
+              FormBuilder(
+                key: _fbKey,
+                child: Column(
+                  children: <Widget>[
+                    FormBuilderDateTimePicker(
+                      attribute: "from_date",
+                      onSaved: (val) {
+                        setState(() {
+                          fromDate = val;
+                          print(fromDate);
+                        });
+                      },
+                      onChanged: (DateTime val) {
+                        if (toDate.difference(val).inDays > 0) {
+                          // toDate should not be lower than fromdate
+//                            fromDate = toDate;
+                          _fbKey.currentState
+                              .setAttributeValue('from_date', toDate);
+                        } else {
+//                            fromDate = val;
+                          _fbKey.currentState
+                              .setAttributeValue('from_date', val);
+                        }
+                        _fbKey.currentState.save();
+//                          fromDate = _fbKey.currentState.value['from_date'];
+//                          print(_fbKey.currentState.value['from_date']);
+//                          print(fromDate);
+                      },
+                      inputType: InputType.date,
+                      initialValue: DateTime.now(),
+                      format: DateFormat("d MMMM y"),
+                      initialDate: DateTime.now(),
+                      lastDate: toDate.difference(DateTime.now()).inDays < 0
+                          ? toDate
+                          : DateTime.now(),
+                      firstDate: DateTime.now().subtract(Duration(days: 60)),
+                      decoration: InputDecoration(
+                          labelText: "From date", fillColor: Colors.black),
+                    ),
+                    FormBuilderDateTimePicker(
+                      attribute: "to_date",
+                      onSaved: (val) {
+                        setState(() {
+                          toDate = val;
+                          print(toDate);
+                        });
+                      },
+                      onChanged: (DateTime val) {
+                        final selectedDate = val;
+                        if (val == null) return;
+
+                        print(selectedDate);
+                        if (fromDate.difference(selectedDate).inDays > 0) {
+                          print(toDate);
+                          // toDate should not be greater than toDate
+                          _fbKey.currentState
+                              .setAttributeValue('to_date', toDate);
+                        } else {
+                          _fbKey.currentState.setAttributeValue('to_date', val);
+                        }
+                        _fbKey.currentState.save();
+                      },
+                      inputType: InputType.date,
+                      initialValue: DateTime.now(),
+                      format: DateFormat("d MMMM y"),
+                      initialDate: DateTime.now(),
+                      lastDate: DateTime.now(),
+                      firstDate: fromDate
+                                  .difference(DateTime.now()
+                                      .subtract(Duration(days: 60)))
+                                  .inDays >
+                              0
+                          ? fromDate
+                          : DateTime.now().subtract(Duration(days: 60)),
+                      decoration: InputDecoration(
+                          labelText: "To date", fillColor: Colors.black),
+                    ),
+                  ],
+                ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
