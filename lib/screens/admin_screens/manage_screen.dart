@@ -1,7 +1,5 @@
 import 'package:attendance_app/screens/admin_screens/user_registration_screen.dart';
-import 'package:attendance_app/services/management_service.dart';
 import 'package:attendance_app/services/user_db_service.dart';
-import 'package:attendance_app/shared/password_generator.dart';
 import 'package:attendance_app/shared/user_filter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

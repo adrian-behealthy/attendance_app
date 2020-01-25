@@ -1,3 +1,4 @@
+import 'package:attendance_app/services/auth_service.dart';
 import 'package:attendance_app/services/management_service.dart';
 import 'package:attendance_app/shared/password_generator.dart';
 import 'package:flutter/material.dart';
@@ -109,6 +110,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
                           final password = PasswordGenerator.generate(8);
                           print('Password: $password');
                           final bool confirmResult = await showDialog(
+                              barrierDismissible: false,
                               context: context,
                               builder: (builder) {
                                 return AlertDialog(
@@ -121,6 +123,13 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
                                         style: TextStyle(
                                             color: Colors.redAccent,
                                             fontSize: 20.0),
+                                      ),
+                                      SizedBox(height: 30,),
+                                      Text(
+                                        "Upon registering this will automatically logout.",
+                                        style: TextStyle(
+                                            color: Colors.redAccent,
+                                            fontSize: 16.0),
                                       ),
                                     ],
                                   ),
@@ -137,6 +146,7 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
                                       ),
                                       onPressed: () {
                                         Navigator.pop(context, true);
+                                        return;
                                       },
                                       color: Colors.redAccent,
                                     ),
@@ -144,30 +154,43 @@ class _UserRegistrationScreenState extends State<UserRegistrationScreen> {
                                 );
                               });
                           if (confirmResult) {
-                            setState(() {
-                              isButtonDisabled = false;
-                            });
+                            setState(
+                              () {
+                                isButtonDisabled = false;
+                              },
+                            );
                           }
-//                        Navigator.pop(context);
                           final result = ManagementService().registerNewUser(
                               email, password, firstName, lastName);
                           if (result == null) {
                             if (this.mounted) {
-                              setState(() {
-                                errorMsg = "Registration failure!";
-                              });
+                              setState(
+                                () {
+                                  errorMsg = "Registration failure!";
+                                },
+                              );
                             }
                             print("$errorMsg");
-                            setState(() {
-                              isButtonDisabled = false;
-                            });
+                            setState(
+                              () {
+                                isButtonDisabled = false;
+                              },
+                            );
+                          }
+                          try {
+                            AuthService().logout();
+                          } catch (e) {
+                            print(e);
                           }
                           Navigator.pop(context);
+                          return;
                         } else {
                           print("validation failed");
-                          setState(() {
-                            isButtonDisabled = false;
-                          });
+                          setState(
+                            () {
+                              isButtonDisabled = false;
+                            },
+                          );
                         }
                       },
               ),
