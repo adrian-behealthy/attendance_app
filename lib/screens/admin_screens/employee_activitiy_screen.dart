@@ -1,4 +1,5 @@
 import 'package:attendance_app/models/log.dart';
+import 'package:attendance_app/services/constants.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -56,6 +57,23 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
 
   _updateDateRange() {
     setState(() {
+      if (fromDate == null) {
+        _fbKey.currentState.setState(() => _fbKey.currentState
+            .setAttributeValue("from_date",
+                DateTime.now().subtract(Duration(days: MAX_DAYS_BACKWARD))));
+        _fbKey.currentState.save();
+        setState(() {
+          fromDate = DateTime.now().subtract(Duration(days: MAX_DAYS_BACKWARD));
+        });
+      }
+      if (toDate == null) {
+        _fbKey.currentState.setState(() =>
+            _fbKey.currentState.setAttributeValue("to_date", DateTime.now()));
+        _fbKey.currentState.save();
+        setState(() {
+          toDate = DateTime.now();
+        });
+      }
       fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
       dayAfter = _currentTime.add(Duration(days: 1));
 
@@ -82,10 +100,12 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
             children: <Widget>[
               FormBuilder(
                 key: _fbKey,
+                autovalidate: true,
                 child: Column(
                   children: <Widget>[
                     FormBuilderDateTimePicker(
                       attribute: "from_date",
+                      validators: [FormBuilderValidators.required()],
                       onSaved: (val) {
                         setState(() {
                           fromDate = val;
@@ -95,18 +115,13 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                       onChanged: (DateTime val) {
                         if (toDate.difference(val).inDays > 0) {
                           // toDate should not be lower than fromdate
-//                            fromDate = toDate;
                           _fbKey.currentState
                               .setAttributeValue('from_date', toDate);
                         } else {
-//                            fromDate = val;
                           _fbKey.currentState
                               .setAttributeValue('from_date', val);
                         }
-                        _fbKey.currentState.save();
-//                          fromDate = _fbKey.currentState.value['from_date'];
-//                          print(_fbKey.currentState.value['from_date']);
-//                          print(fromDate);
+                        _fbKey.currentState.saveAndValidate();
                       },
                       inputType: InputType.date,
                       initialValue: DateTime.now(),
@@ -115,7 +130,8 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                       lastDate: toDate.difference(DateTime.now()).inDays < 0
                           ? toDate
                           : DateTime.now(),
-                      firstDate: DateTime.now().subtract(Duration(days: 60)),
+                      firstDate: DateTime.now()
+                          .subtract(Duration(days: MAX_DAYS_BACKWARD)),
                       decoration: InputDecoration(
                           labelText: "From date", fillColor: Colors.black),
                     ),
@@ -127,6 +143,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                           print(toDate);
                         });
                       },
+                      validators: [FormBuilderValidators.required()],
                       onChanged: (DateTime val) {
                         final selectedDate = val;
                         if (val == null) return;
@@ -140,7 +157,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                         } else {
                           _fbKey.currentState.setAttributeValue('to_date', val);
                         }
-                        _fbKey.currentState.save();
+                        _fbKey.currentState.saveAndValidate();
                       },
                       inputType: InputType.date,
                       initialValue: DateTime.now(),
@@ -148,12 +165,13 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                       initialDate: DateTime.now(),
                       lastDate: DateTime.now(),
                       firstDate: fromDate
-                                  .difference(DateTime.now()
-                                      .subtract(Duration(days: 60)))
+                                  .difference(DateTime.now().subtract(
+                                      Duration(days: MAX_DAYS_BACKWARD)))
                                   .inDays >
                               0
                           ? fromDate
-                          : DateTime.now().subtract(Duration(days: 60)),
+                          : DateTime.now()
+                              .subtract(Duration(days: MAX_DAYS_BACKWARD)),
                       decoration: InputDecoration(
                           labelText: "To date", fillColor: Colors.black),
                     ),
@@ -178,20 +196,9 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
               SizedBox(
                 height: 10.0,
               ),
-
               SizedBox(
                 height: 12.0,
               ),
-//              Text(
-//                "Your today's activities. ($date)",
-//                style: TextStyle(
-//                    fontSize: Theme.of(context).primaryTextTheme.title.fontSize,
-//                    color: Colors.blue,
-//                    fontWeight: FontWeight.bold),
-//              ),
-//              SizedBox(
-//                height: 12.0,
-//              ),
               Expanded(
                 child: StreamBuilder<List<Log>>(
                   stream: LogDbHelperService(
@@ -202,10 +209,10 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                   builder: (context, snapshot) {
                     if (!snapshot.hasData)
                       return Center(
-                        child: Text("No logs"),
+                        child: Text("No logs for this duration"),
                       );
                     if (snapshot.data.length == 0) {
-                      return Text("No logs");
+                      return Center(child: Text("No logs for this duration"));
                     }
                     return ListView.builder(
                       itemCount: snapshot.data.length,
