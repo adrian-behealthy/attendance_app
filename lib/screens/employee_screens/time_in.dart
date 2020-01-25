@@ -4,7 +4,6 @@ import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/models/user.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:attendance_app/services/log_db_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:location_permissions/location_permissions.dart';
@@ -150,7 +149,7 @@ class _TimeInState extends State<TimeIn> with WidgetsBindingObserver {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text('Time-in / Time-out'),
+        title: const Text('Time-in / Time-out '),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

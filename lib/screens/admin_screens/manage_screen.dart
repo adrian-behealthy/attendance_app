@@ -1,3 +1,4 @@
+import 'package:attendance_app/screens/admin_screens/user_registration_screen.dart';
 import 'package:attendance_app/services/management_service.dart';
 import 'package:attendance_app/services/user_db_service.dart';
 import 'package:attendance_app/shared/password_generator.dart';
@@ -48,7 +49,6 @@ class _ManageScreenState extends State<ManageScreen> {
                     );
                   return ListView.builder(
                     itemCount: snapshot.data.documents.length,
-//                    itemExtent: 80.0,
                     itemBuilder: (context, index) =>
                         _buildList(context, snapshot.data.documents[index]),
                   );
@@ -61,114 +61,14 @@ class _ManageScreenState extends State<ManageScreen> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          _showUserDialog();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Material(child: UserRegistrationScreen()),
+            ),
+          );
         },
       ),
-    );
-  }
-
-  _showUserDialog() {
-    return showDialog(
-      context: context,
-      builder: (builder) {
-        return AlertDialog(
-          title: Text("Add user"),
-          content: Wrap(
-            children: <Widget>[
-              FormBuilder(
-                key: _fbKey,
-                child: Column(
-                  children: <Widget>[
-                    FormBuilderTextField(
-                      attribute: "first_name",
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(labelText: "First name"),
-                      validators: [
-                        FormBuilderValidators.required(),
-                        FormBuilderValidators.maxLength(70),
-                      ],
-                    ),
-                    FormBuilderTextField(
-                      attribute: "last_name",
-                      keyboardType: TextInputType.text,
-                      decoration: InputDecoration(labelText: "Last name"),
-                      validators: [
-                        FormBuilderValidators.required(),
-                        FormBuilderValidators.maxLength(70),
-                      ],
-                    ),
-                    FormBuilderTextField(
-                      attribute: "email",
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(labelText: "Email"),
-                      validators: [
-                        FormBuilderValidators.required(),
-                        FormBuilderValidators.email(),
-                        FormBuilderValidators.maxLength(70),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  MaterialButton(
-                    color: Colors.grey,
-                    child: Text(
-                      "Cancel",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  MaterialButton(
-                    color: Theme.of(context).accentColor,
-                    child: Text(
-                      "Submit",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    onPressed: () {
-                      _fbKey.currentState.save();
-
-                      if (_fbKey.currentState.validate()) {
-                        print(_fbKey.currentState.value);
-                        final firstName =
-                            _fbKey.currentState.value['first_name'];
-                        final lastName = _fbKey.currentState.value['last_name'];
-
-                        final email = _fbKey.currentState.value['email'];
-                        final password = PasswordGenerator.generate(8);
-                        print('Password: $password');
-                        final result = ManagementService().registerNewUser(
-                            email, password, firstName, lastName);
-                        if (result == null) {
-                          if (this.mounted) {
-                            setState(() {
-                              errorMsg = "Registration failure!";
-                            });
-                          }
-                          print("$errorMsg");
-                        }
-                      } else {
-                        print("validation failed");
-                      }
-                    },
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 20.0,
-              ),
-              Text(
-                errorMsg,
-                style: TextStyle(color: Colors.red),
-              )
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -291,6 +191,7 @@ class _ManageScreenState extends State<ManageScreen> {
                                                       .currentState
                                                       .value['is_active'] ??
                                                   document['is_active']);
+                                          Navigator.pop(context);
                                         },
                                       ),
                                     ],
