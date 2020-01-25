@@ -71,14 +71,22 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
             _fbKey.currentState.setAttributeValue("to_date", DateTime.now()));
         _fbKey.currentState.save();
         setState(() {
-          toDate = DateTime.now();
+          toDate = DateTime.now().add(Duration(days: 1));
         });
       }
-      fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
-      dayAfter = _currentTime.add(Duration(days: 1));
-
-      toDateSinceEpoch =
-          (toDate.add(Duration(days: 1)).millisecondsSinceEpoch / 1000).floor();
+      fromDateSinceEpoch = (DateFormat("y-mm-dd")
+                  .parse(fromDate.toIso8601String())
+                  .millisecondsSinceEpoch /
+              1000)
+          .floor();
+      dayAfter = toDate.add(Duration(days: 1));
+      toDateSinceEpoch = (DateFormat("y-mm-dd")
+                  .parse(dayAfter.toIso8601String())
+                  .millisecondsSinceEpoch /
+              1000)
+          .floor();
+//      print(DateTime.fromMillisecondsSinceEpoch(fromDateSinceEpoch * 1000));
+//      print(DateTime.fromMillisecondsSinceEpoch(toDateSinceEpoch * 1000));
     });
   }
 
