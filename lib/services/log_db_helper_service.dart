@@ -28,7 +28,7 @@ class LogDbHelperService {
     Stream<QuerySnapshot> filteredLogs = _filteredByUid(logCollection);
 
     logList = await filteredLogs.map(_logListFromSnapshot).first;
-    if (logList.isNotEmpty) yield logList;
+    yield logList;
   }
 
   Stream<List<Log>> logsByDate() async* {
@@ -38,7 +38,7 @@ class LogDbHelperService {
     List<Log> logList = [];
     Stream<QuerySnapshot> filteredLogSnapshots = _filteredByDate(logCollection);
     logList = await filteredLogSnapshots.map(_logListFromSnapshot).first;
-    if (logList.isNotEmpty) yield logList;
+    yield logList;
   }
 
   List<Log> _logListFromSnapshot(QuerySnapshot snapshot) {
