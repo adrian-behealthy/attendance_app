@@ -97,7 +97,8 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: Text('Logs : (${widget.firstName} ${widget.lastName})'),
+        title:
+            Text('Logs : ${widget.firstName ?? ""} ${widget.lastName ?? ""}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
