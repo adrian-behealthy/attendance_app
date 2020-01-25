@@ -1,8 +1,6 @@
 import 'package:attendance_app/models/log.dart';
-import 'package:attendance_app/models/user.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class EmployeeActivityScreen extends StatefulWidget {
   final String uid;
@@ -19,9 +17,38 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
     with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   DateTime _currentTime = DateTime.now();
+  int fromDateSinceEpoch;
+  int toDateSinceEpoch;
+  DateTime dayAfter;
+  DateTime fromDate;
+  DateTime toDate;
 
   @override
   void initState() {
+//    String date = _currentTime.month.toString() +
+//        "/" +
+//        _currentTime.day.toString() +
+//        "/" +
+//        _currentTime.year.toString();
+
+    fromDate = DateTime.parse("${_currentTime.year}" +
+        "-${_currentTime.month.toString().padLeft(2, '0')}" +
+        "-${_currentTime.day.toString().padLeft(2, '0')}");
+
+    fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
+    dayAfter = _currentTime.add(Duration(days: 1));
+//    dayBefore = _currentTime.subtract(Duration(days: 2));
+//    fromDate = (DateTime.parse("${dayBefore.year}" +
+//                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
+//                    "-${dayBefore.day.toString().padLeft(2, '0')}")
+//                .millisecondsSinceEpoch /
+//            1000)
+//        .floor();
+    toDate = DateTime.parse("${dayAfter.year}" +
+        "-${dayAfter.month.toString().padLeft(2, '0')}" +
+        "-${dayAfter.day.toString().padLeft(2, '0')}");
+
+    toDateSinceEpoch = (toDate.millisecondsSinceEpoch / 1000).floor();
     super.initState();
   }
 
@@ -32,33 +59,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User>(context);
-    String date = _currentTime.month.toString() +
-        "/" +
-        _currentTime.day.toString() +
-        "/" +
-        _currentTime.year.toString();
-
-    int fromDate = (DateTime.parse("${_currentTime.year}" +
-                    "-${_currentTime.month.toString().padLeft(2, '0')}" +
-                    "-${_currentTime.day.toString().padLeft(2, '0')}")
-                .millisecondsSinceEpoch /
-            1000)
-        .floor();
-    DateTime dayAfter = _currentTime.add(Duration(days: 1));
-//    DateTime dayBefore = _currentTime.subtract(Duration(days: 2));
-//    fromDate = (DateTime.parse("${dayBefore.year}" +
-//                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
-//                    "-${dayBefore.day.toString().padLeft(2, '0')}")
-//                .millisecondsSinceEpoch /
-//            1000)
-//        .floor();
-    int toDate = (DateTime.parse("${dayAfter.year}" +
-                    "-${dayAfter.month.toString().padLeft(2, '0')}" +
-                    "-${dayAfter.day.toString().padLeft(2, '0')}")
-                .millisecondsSinceEpoch /
-            1000)
-        .floor();
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -69,8 +69,18 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              Text(
+                "From : $fromDate",
+                textAlign: TextAlign.left,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                "To : $toDate",
+                textAlign: TextAlign.left,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
@@ -106,7 +116,9 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
               Expanded(
                 child: StreamBuilder<List<Log>>(
                   stream: LogDbHelperService(
-                          uid: user.uid, fromDate: fromDate, toDate: toDate)
+                          uid: widget.uid,
+                          fromDate: fromDateSinceEpoch,
+                          toDate: toDateSinceEpoch)
                       .logsByUid(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData)
@@ -143,6 +155,9 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              SizedBox(
+                height: 12.0,
+              ),
               Text(
                 "${log.firstName} ${log.lastName}",
                 textAlign: TextAlign.left,
@@ -155,7 +170,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen>
           subtitle: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text("${dateTime.hour}:${dateTime.minute}"),
+              Text("$dateTime"),
               log.isIn
                   ? Text(
                       "Time-in",
