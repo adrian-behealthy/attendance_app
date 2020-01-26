@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:attendance_app/models/log.dart';
-import 'package:attendance_app/services/auth_service.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class AdminHome extends StatefulWidget {
   @override
@@ -123,7 +123,7 @@ class _AdminHomeState extends State<AdminHome> with WidgetsBindingObserver {
           subtitle: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Text("${dateTime.hour}:${dateTime.minute}"),
+              Text(DateFormat("h:m a").format(dateTime)),
               log.isIn
                   ? Text(
                       "Time-in",

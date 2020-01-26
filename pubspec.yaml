@@ -21,8 +21,7 @@ dependencies:
   intl: ^0.16.1
   csv: ^4.0.3
   path_provider: ^1.5.1
-  simple_permissions: ^0.1.9
-
+  permission_handler: ^4.2.0+hotfix.2
 
 dev_dependencies:
   flutter_test:

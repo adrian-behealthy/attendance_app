@@ -1,5 +1,6 @@
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/services/constants.dart';
+import 'package:attendance_app/services/csv_helper.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -26,6 +27,8 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   DateTime dayAfter;
   DateTime fromDate;
   DateTime toDate;
+
+  List<Log> logs = [];
 
   @override
   void initState() {
@@ -202,12 +205,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                   ),
                 ],
               ),
-              SizedBox(
-                height: 10.0,
-              ),
-              SizedBox(
-                height: 12.0,
-              ),
               Expanded(
                 child: StreamBuilder<List<Log>>(
                   stream: LogDbHelperService(
@@ -216,17 +213,69 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                           toDate: toDateSinceEpoch)
                       .logsByUid(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return Center(
                         child: Text("No logs for this duration"),
                       );
+                    }
+                    logs = snapshot.data;
                     if (snapshot.data.length == 0) {
                       return Center(child: Text("No logs for this duration"));
                     }
-                    return ListView.builder(
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (context, index) =>
-                          _buildList(context, snapshot.data[index]),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        logs.isEmpty
+                            ? null
+                            : FlatButton.icon(
+                                onPressed: () async {
+                                  final result = await CsvHelper.exportUserLog(
+                                      firstName: logs.first.firstName,
+                                      lastName: logs.first.lastName,
+                                      fromDate: fromDate.millisecondsSinceEpoch,
+                                      toDate: toDate.millisecondsSinceEpoch,
+                                      logs: logs);
+
+                                  String exportMsg = "";
+                                  Color snackbarColor = Colors.blue;
+                                  if (result) {
+                                    exportMsg =
+                                        "The logs successfully exported as CSV";
+                                  } else {
+                                    exportMsg = "Error in exporting logs.";
+                                    snackbarColor = Colors.redAccent;
+                                  }
+                                  _scaffoldKey.currentState
+                                      .removeCurrentSnackBar();
+                                  _scaffoldKey.currentState.showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: snackbarColor,
+                                      content: Text(
+                                        "$exportMsg",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      duration: Duration(seconds: 3),
+                                    ),
+                                  );
+                                  print(result);
+                                },
+                                icon: Icon(
+                                  Icons.save,
+                                  color: Colors.green[800],
+                                  size: 36.0,
+                                ),
+                                label: Text(
+                                  "Export",
+                                  style: TextStyle(color: Colors.green[800]),
+                                )),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (context, index) =>
+                                _buildList(context, snapshot.data[index]),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
@@ -239,8 +288,8 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   }
 
   _buildList(BuildContext context, Log log) {
-    DateTime dateTime =
-        DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000);
+    String dateTime = DateFormat('d MMM y h:m a').format(
+        DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
 
     return Container(
       child: Card(

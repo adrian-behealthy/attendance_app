@@ -6,14 +6,14 @@ import 'package:csv/csv.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:simple_permissions/simple_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CsvHelper {
   static Future<bool> exportUserLog(
       {@required firstName,
       @required lastName,
-      @required DateTime fromDate,
-      @required DateTime toDate,
+      @required int fromDate,
+      @required int toDate,
       @required List<Log> logs}) async {
     bool success = true;
 
@@ -28,22 +28,40 @@ class CsvHelper {
 
     final name = "$firstName$lastName";
     final duration = (fromDate == toDate)
-        ? DateFormat("MMMM-dd-y").add_yM().parse(toDate.toIso8601String())
-        : "${DateFormat("MMMM-dd-y").add_yM().parse(fromDate.toIso8601String())}_to_${DateFormat("MMMM-dd-y").add_yM().parse(toDate.toIso8601String())}";
+        ? DateFormat("y-MMM-dd")
+            .format(DateTime.fromMillisecondsSinceEpoch(toDate))
+        : "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(fromDate))}" +
+            "_to_" +
+            "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(toDate))}";
 
     final filename = "${name}_$duration.csv";
 
-    await SimplePermissions.requestPermission(Permission.WriteExternalStorage);
-    bool checkPermission = await SimplePermissions.checkPermission(
-        Permission.WriteExternalStorage);
+    Map<PermissionGroup, PermissionStatus> permissions =
+        await PermissionHandler().requestPermissions([PermissionGroup.storage]);
 
-    if (checkPermission) {
-      String dir =
-          (await getExternalStorageDirectory()).absolute.path + "/documents";
+    PermissionStatus permission = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.storage);
 
+    if (permission == PermissionStatus.granted) {
+      String dir = "";
+
+      try {
+        dir = (await getExternalStorageDirectory()).absolute.path +
+            "/documents/attendace";
+      } catch (e) {
+        print(e);
+        return false;
+      }
+
+      final attendanceDir = new Directory(dir);
+      bool isThere = await attendanceDir.exists();
+      if (!isThere) {
+        attendanceDir.create(recursive: true);
+      }
+      print(dir);
       File f;
       try {
-        f = new File(dir + "filename.csv");
+        f = new File(dir + "/$filename");
       } catch (e) {
         print(e);
         return false;
@@ -61,8 +79,14 @@ class CsvHelper {
 
       List<List<dynamic>> rows = [row];
       for (Log log in logs) {
-        var date = DateFormat.yMMMMd('en_US').parse(log.secondsSinceEpoch);
-        var time = DateFormat.jm().parse(log.secondsSinceEpoch);
+        print(log.secondsSinceEpoch);
+        var date = DateFormat("y-MMM-dd").format(
+            DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
+        var time = DateFormat("hh:mm a").format(
+            DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
+        print(time);
+        print(date);
+        //                return false;
         List<dynamic> row = [];
         row.add(date);
         row.add(time);
@@ -82,8 +106,9 @@ class CsvHelper {
         print(e);
         success = false;
       }
-
-      return success;
+    } else {
+      return false;
     }
+    return success;
   }
 }
