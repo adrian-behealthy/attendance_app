@@ -1,10 +1,14 @@
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/services/constants.dart';
 import 'package:attendance_app/services/csv_helper.dart';
+import 'package:attendance_app/services/pdf_helper.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
+import 'package:attendance_app/shared/enums.dart';
+
+enum _FileFormat { CSV_FORMAT, PDF_FORMAT }
 
 class EmployeeActivityScreen extends StatefulWidget {
   final String uid;
@@ -27,27 +31,17 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   DateTime dayAfter;
   DateTime fromDate;
   DateTime toDate;
+  _FileFormat _fileFormat = _FileFormat.CSV_FORMAT;
 
   List<Log> logs = [];
 
   @override
   void initState() {
-    fromDate = DateTime.parse("${_currentTime.year}" +
-        "-${_currentTime.month.toString().padLeft(2, '0')}" +
-        "-${_currentTime.day.toString().padLeft(2, '0')}");
-
+    fromDate = DateTime.parse(DateFormat("y-MM-dd").format(_currentTime));
     fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
     dayAfter = _currentTime.add(Duration(days: 1));
-//    dayBefore = _currentTime.subtract(Duration(days: 2));
-//    fromDate = (DateTime.parse("${dayBefore.year}" +
-//                    "-${dayBefore.month.toString().padLeft(2, '0')}" +
-//                    "-${dayBefore.day.toString().padLeft(2, '0')}")
-//                .millisecondsSinceEpoch /
-//            1000)
-//        .floor();
-    toDate = DateTime.parse("${dayAfter.year}" +
-        "-${dayAfter.month.toString().padLeft(2, '0')}" +
-        "-${dayAfter.day.toString().padLeft(2, '0')}");
+
+    toDate = DateTime.parse(DateFormat("y-MM-dd").format(dayAfter));
 
     toDateSinceEpoch = (toDate.millisecondsSinceEpoch / 1000).floor();
     super.initState();
@@ -88,8 +82,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                   .millisecondsSinceEpoch /
               1000)
           .floor();
-//      print(DateTime.fromMillisecondsSinceEpoch(fromDateSinceEpoch * 1000));
-//      print(DateTime.fromMillisecondsSinceEpoch(toDateSinceEpoch * 1000));
     });
   }
 
@@ -229,35 +221,66 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                             ? null
                             : FlatButton.icon(
                                 onPressed: () async {
-                                  final result = await CsvHelper.exportUserLog(
-                                      firstName: logs.first.firstName,
-                                      lastName: logs.first.lastName,
-                                      fromDate: fromDate.millisecondsSinceEpoch,
-                                      toDate: toDate.millisecondsSinceEpoch,
-                                      logs: logs);
+                                  EXPORT_RESULT result = await _showDialog();
 
                                   String exportMsg = "";
                                   Color snackbarColor = Colors.blue;
-                                  if (result) {
+                                  switch (result) {
+                                    case EXPORT_RESULT.CANCELED_EXPORT:
+                                      break;
+                                    case EXPORT_RESULT.SUCCESS_PDF:
+                                      exportMsg =
+                                          "The logs successfully exported as PDF";
+                                      break;
+                                    case EXPORT_RESULT.SUCCESS_CSV:
+                                      exportMsg =
+                                          "The logs successfully exported as CSV";
+                                      break;
+                                    case EXPORT_RESULT.FAILED_PDF:
+                                      exportMsg =
+                                          "Error in exporting logs in PDF.";
+                                      snackbarColor = Colors.redAccent;
+                                      break;
+                                    case EXPORT_RESULT.FAILED_CSV:
+                                      exportMsg =
+                                          "Error in exporting logs in CSV.";
+                                      snackbarColor = Colors.redAccent;
+                                      break;
+                                  }
+                                  if (result == EXPORT_RESULT.SUCCESS_CSV) {
                                     exportMsg =
                                         "The logs successfully exported as CSV";
-                                  } else {
-                                    exportMsg = "Error in exporting logs.";
+                                  } else if (result ==
+                                      EXPORT_RESULT.SUCCESS_PDF) {
+                                    exportMsg =
+                                        "The logs successfully exported as PDF";
+                                  } else if (result ==
+                                      EXPORT_RESULT.FAILED_CSV) {
+                                    exportMsg =
+                                        "Error in exporting logs in CSV.";
+                                    snackbarColor = Colors.redAccent;
+                                  } else if (result ==
+                                      EXPORT_RESULT.FAILED_PDF) {
+                                    exportMsg =
+                                        "Error in exporting logs in PDF.";
                                     snackbarColor = Colors.redAccent;
                                   }
-                                  _scaffoldKey.currentState
-                                      .removeCurrentSnackBar();
-                                  _scaffoldKey.currentState.showSnackBar(
-                                    SnackBar(
-                                      backgroundColor: snackbarColor,
-                                      content: Text(
-                                        "$exportMsg",
-                                        textAlign: TextAlign.center,
+
+                                  if (result != EXPORT_RESULT.CANCELED_EXPORT) {
+                                    _scaffoldKey.currentState
+                                        .removeCurrentSnackBar();
+                                    _scaffoldKey.currentState.showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: snackbarColor,
+                                        content: Text(
+                                          "$exportMsg",
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        duration: Duration(seconds: 3),
                                       ),
-                                      duration: Duration(seconds: 3),
-                                    ),
-                                  );
-                                  print(result);
+                                    );
+                                    print(result);
+                                  }
                                 },
                                 icon: Icon(
                                   Icons.save,
@@ -267,7 +290,8 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                                 label: Text(
                                   "Export",
                                   style: TextStyle(color: Colors.green[800]),
-                                )),
+                                ),
+                              ),
                         Expanded(
                           child: ListView.builder(
                             itemCount: snapshot.data.length,
@@ -328,6 +352,107 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<EXPORT_RESULT> _exportUserLogCSV() async {
+    return await CsvHelper.exportUserLog(
+        firstName: logs.first.firstName,
+        lastName: logs.first.lastName,
+        fromDate: fromDate.millisecondsSinceEpoch,
+        toDate: toDate.millisecondsSinceEpoch,
+        logs: logs);
+  }
+
+  String test = "";
+
+  Future<EXPORT_RESULT> _showDialog() async {
+    return await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (builder) {
+        return AlertDialog(
+          title: Text("Export dialog"),
+          content: Wrap(
+            children: <Widget>[
+              Text("Choose file format"),
+              Row(
+                children: <Widget>[
+                  Radio(
+                    value: _FileFormat.CSV_FORMAT,
+                    groupValue: _fileFormat,
+                    autofocus: true,
+                    onChanged: (_FileFormat val) => setState(
+                      () {
+                        _fileFormat = val;
+                      },
+                    ),
+                  ),
+                  Text("CSV format"),
+                ],
+              ),
+              Row(
+                children: <Widget>[
+                  Radio(
+                    value: _FileFormat.PDF_FORMAT,
+                    groupValue: _fileFormat,
+                    autofocus: true,
+                    onChanged: (_FileFormat val) => setState(() {
+                      _fileFormat = val;
+                    }),
+                  ),
+                  Text("PDF format"),
+                ],
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            RaisedButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.pop(context, EXPORT_RESULT.CANCELED_EXPORT);
+              },
+            ),
+            RaisedButton(
+              child: Text(
+                "Export",
+              ),
+              onPressed: () async {
+                EXPORT_RESULT result = EXPORT_RESULT.CANCELED_EXPORT;
+                print("pressed");
+                if (_fileFormat == _FileFormat.CSV_FORMAT) {
+                  result = await _exportUserLogCSV();
+                } else {
+                  result = await PdfHelper.exportUserLogPDF(
+                      firstName: logs.first.firstName,
+                      lastName: logs.first.lastName,
+                      fromDate: fromDate.millisecondsSinceEpoch,
+                      toDate: toDate.millisecondsSinceEpoch,
+                      logs: logs);
+                }
+                if (result != EXPORT_RESULT.FAILED_CSV ||
+                    result != EXPORT_RESULT.FAILED_PDF) {
+                  Navigator.pop(context, result);
+                } else {
+                  _scaffoldKey.currentState.removeCurrentSnackBar();
+                  _scaffoldKey.currentState.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Export failed",
+                        textAlign: TextAlign.center,
+                      ),
+                      duration: Duration(seconds: 3),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
+                return result;
+              },
+              color: Colors.redAccent,
+            ),
+          ],
+        );
+      },
     );
   }
 }

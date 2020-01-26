@@ -7,24 +7,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:attendance_app/shared/enums.dart';
 
 class CsvHelper {
-  static Future<bool> exportUserLog(
+  static Future<EXPORT_RESULT> exportUserLog(
       {@required firstName,
       @required lastName,
       @required int fromDate,
       @required int toDate,
       @required List<Log> logs}) async {
-    bool success = true;
-
-//    RowItems columnNames = RowItems(
-//        name: "Name",
-//        firstName: "Firstname",
-//        lastName: "LastName",
-//        date: "Date",
-//        time: "Time",
-//        lat: "Latitude",
-//        lng: "Longitude");
+    EXPORT_RESULT result;
 
     final name = "$firstName$lastName";
     final duration = (fromDate == toDate)
@@ -50,7 +42,7 @@ class CsvHelper {
             "/documents/attendace";
       } catch (e) {
         print(e);
-        return false;
+        return EXPORT_RESULT.FAILED_CSV;
       }
 
       final attendanceDir = new Directory(dir);
@@ -58,16 +50,15 @@ class CsvHelper {
       if (!isThere) {
         attendanceDir.create(recursive: true);
       }
-      print(dir);
       File f;
       try {
         f = new File(dir + "/$filename");
       } catch (e) {
         print(e);
-        return false;
+        return EXPORT_RESULT.FAILED_CSV;
       }
 
-      List<dynamic> row = [
+      List<dynamic> titles = [
         "Date",
         "Time",
         "Project",
@@ -77,21 +68,18 @@ class CsvHelper {
         "Comment"
       ];
 
-      List<List<dynamic>> rows = [row];
+      List<List<dynamic>> rows = [titles];
       for (Log log in logs) {
-        print(log.secondsSinceEpoch);
         var date = DateFormat("y-MMM-dd").format(
             DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
         var time = DateFormat("hh:mm a").format(
             DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
-        print(time);
-        print(date);
-        //                return false;
+
         List<dynamic> row = [];
         row.add(date);
         row.add(time);
-        row.add(log.isIn ? "Time-in" : "Time-out");
         row.add(log.projectName);
+        row.add(log.isIn ? "Time-in" : "Time-out");
         row.add("${log.lat}");
         row.add("${log.lng}");
         row.add(log.comment);
@@ -102,13 +90,13 @@ class CsvHelper {
       try {
         String csv = const ListToCsvConverter().convert(rows);
         f.writeAsString(csv);
+        result = EXPORT_RESULT.SUCCESS_CSV;
       } catch (e) {
-        print(e);
-        success = false;
+        result = EXPORT_RESULT.SUCCESS_CSV;
       }
     } else {
-      return false;
+      result = EXPORT_RESULT.FAILED_CSV;
     }
-    return success;
+    return result;
   }
 }
