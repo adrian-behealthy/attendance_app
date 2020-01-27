@@ -225,13 +225,11 @@ class PdfHelper {
     File f;
     try {
       f = new File(dir + "/$filename");
+      f.writeAsBytesSync(pdf.save());
     } catch (e) {
       print(e);
       return EXPORT_RESULT.FAILED_PDF;
     }
-
-//    final File file = File('example.pdf');
-    f.writeAsBytesSync(pdf.save());
 
     return EXPORT_RESULT.SUCCESS_PDF;
   }
@@ -281,9 +279,10 @@ class PdfHelper {
 
     pdf.addPage(
       MultiPage(
-          pageFormat: PdfPageFormat.letter
-              .copyWith(marginBottom: 1 * PdfPageFormat.cm),
-          crossAxisAlignment: CrossAxisAlignment.start,orientation: PageOrientation.landscape,
+          pageFormat:
+              PdfPageFormat.letter.copyWith(marginBottom: 1 * PdfPageFormat.cm),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          orientation: PageOrientation.landscape,
           header: (Context context) {
             if (context.pageNumber == 1) {
               return null;
@@ -345,13 +344,11 @@ class PdfHelper {
     File f;
     try {
       f = new File(dir + "/$filename");
+      f.writeAsBytesSync(pdf.save());
     } catch (e) {
       print(e);
       return EXPORT_RESULT.FAILED_PDF;
     }
-
-//    final File file = File('example.pdf');
-    f.writeAsBytesSync(pdf.save());
 
     return EXPORT_RESULT.SUCCESS_PDF;
   }
