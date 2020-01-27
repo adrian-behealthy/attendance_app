@@ -1,3 +1,4 @@
+import 'package:attendance_app/screens/admin_screens/day_log_activity_screen.dart';
 import 'package:attendance_app/screens/admin_screens/employee_activitiy_screen.dart';
 import 'package:attendance_app/shared/user_filter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +12,7 @@ class EmployeeTimeList extends StatefulWidget {
 class _EmployeeTimeListState extends State<EmployeeTimeList> {
   String errorMsg = "";
   UserFilter _userFilter = UserFilter.AllActiveNonAdminUsers;
+  bool isDay = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,25 +27,60 @@ class _EmployeeTimeListState extends State<EmployeeTimeList> {
             SizedBox(
               height: 10.0,
             ),
-            _filterDropdown(),
+            !isDay ? _filterDropdown() : Container(),
+            Row(
+              children: <Widget>[
+                Text("Particular date"),
+                Switch(
+                    value: isDay,
+                    onChanged: (val) {
+                      setState(() {
+                        isDay = !isDay;
+                      });
+                    }),
+              ],
+            ),
             SizedBox(
               height: 20.0,
             ),
             Expanded(
-              child: StreamBuilder(
-                stream: Firestore.instance.collection("users").snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData)
-                    return Center(
-                      child: Text("Loading..."),
-                    );
-                  return ListView.builder(
-                    itemCount: snapshot.data.documents.length,
-                    itemBuilder: (context, index) =>
-                        _buildList(context, snapshot.data.documents[index]),
-                  );
-                },
-              ),
+              child: isDay
+                  ? Center(
+                    child: InkWell(
+                        child: FlatButton.icon(
+                          onPressed: () async {
+                            await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        DayLogActivityScreen()));
+                          },
+                          icon: Icon(
+                            Icons.view_day,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          label: Text("View particular date logs",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                              )),
+                        ),
+                      ),
+                  )
+                  : StreamBuilder(
+                      stream:
+                          Firestore.instance.collection("users").snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return Center(
+                            child: Text("Loading..."),
+                          );
+                        return ListView.builder(
+                          itemCount: snapshot.data.documents.length,
+                          itemBuilder: (context, index) => _buildList(
+                              context, snapshot.data.documents[index]),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -103,9 +140,9 @@ class _EmployeeTimeListState extends State<EmployeeTimeList> {
           MaterialPageRoute(
             builder: (context) => Material(
                 child: EmployeeActivityScreen(
-                    lastName: document['last_name']??'',
-                    firstName: document['first_name']??'',
-                    uid: document.documentID??'')),
+                    lastName: document['last_name'] ?? '',
+                    firstName: document['first_name'] ?? '',
+                    uid: document.documentID ?? '')),
           ),
         );
       },

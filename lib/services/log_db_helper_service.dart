@@ -32,9 +32,11 @@ class LogDbHelperService {
   }
 
   Stream<List<Log>> logsByDate() async* {
+    print("logsBydate");
+    print(fromDate);
+    print(toDate);
     final CollectionReference logCollection = firestore.collection("logs");
     _userMap = await _getUserMap();
-//    print(_userMap);
     List<Log> logList = [];
     Stream<QuerySnapshot> filteredLogSnapshots = _filteredByDate(logCollection);
     logList = await filteredLogSnapshots.map(_logListFromSnapshot).first;

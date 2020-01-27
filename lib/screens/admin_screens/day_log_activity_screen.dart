@@ -1,0 +1,174 @@
+import 'package:attendance_app/models/log.dart';
+import 'package:attendance_app/services/constants.dart';
+import 'package:attendance_app/services/log_db_helper_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:intl/intl.dart';
+
+class DayLogActivityScreen extends StatefulWidget {
+  @override
+  _DayLogActivityScreenState createState() => _DayLogActivityScreenState();
+}
+
+class _DayLogActivityScreenState extends State<DayLogActivityScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  DateTime _selectedDate = DateTime.now();
+  final GlobalKey<FormBuilderState> _fbKey = new GlobalKey<FormBuilderState>();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String date = _selectedDate.year.toString() +
+        "-" +
+        _selectedDate.month.toString().padLeft(2, '0') +
+        "-" +
+        _selectedDate.day.toString().padLeft(2, '0');
+    DateTime fromDate = DateTime.parse(date);
+    DateTime dayAfter = _selectedDate.add(Duration(days: 1));
+    DateTime toDate = DateTime.parse(dayAfter.year.toString() +
+        "-" +
+        dayAfter.month.toString().padLeft(2, '0') +
+        "-" +
+        dayAfter.day.toString().padLeft(2, '0'));
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: const Text('Particular date logs'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                height: 12.0,
+              ),
+              FormBuilder(
+                key: _fbKey,
+                autovalidate: true,
+                child: Column(
+                  children: <Widget>[
+                    FormBuilderDateTimePicker(
+                      attribute: "date",
+                      validators: [FormBuilderValidators.required()],
+                      onSaved: (val) {
+                        setState(() {
+                          _selectedDate = val;
+                        });
+                      },
+                      onChanged: (DateTime val) {
+                        _fbKey.currentState.save();
+                      },
+                      inputType: InputType.date,
+                      initialValue: DateTime.now(),
+                      format: DateFormat("d MMMM y"),
+                      initialDate: DateTime.now(),
+                      lastDate: DateTime.now(),
+                      firstDate: DateTime.now()
+                          .subtract(Duration(days: MAX_DAYS_BACKWARD)),
+                      decoration: InputDecoration(
+                          labelText: "Date of logs", fillColor: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+              Center(
+                child: Text(
+                  "All activities on ${DateFormat('MMM d, y').format(fromDate)}",
+                  style: TextStyle(
+                      fontSize:
+                          Theme.of(context).primaryTextTheme.title.fontSize,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                height: 12.0,
+              ),
+              Expanded(
+                child: StreamBuilder<List<Log>>(
+                  stream: LogDbHelperService(
+                          fromDate:
+                              (fromDate.millisecondsSinceEpoch / 1000).floor(),
+                          toDate:
+                              (toDate.millisecondsSinceEpoch / 1000).floor())
+                      .logsByDate(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData)
+                      return Center(
+                        child: Text(
+                            "No logs for ${DateFormat('MMMM d, y').format(fromDate)}"),
+                      );
+                    if (snapshot.data.length == 0) {
+                      return Center(
+                          child: Text(
+                              "No logs for ${DateFormat('MMMM d, y').format(fromDate)}"));
+                    }
+                    return ListView.builder(
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, index) =>
+                          _buildList(context, snapshot.data[index]),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _buildList(BuildContext context, Log log) {
+    DateTime dateTime =
+        DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000);
+
+    return Container(
+      child: Card(
+        elevation: 8.0,
+        child: ListTile(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                "${log.firstName} ${log.lastName}",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                  "${log.projectName ?? ''} ; lat:${log.lat ?? ''}; lng:${log.lng ?? ''}"),
+            ],
+          ),
+          subtitle: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(DateFormat("h:m a").format(dateTime)),
+              log.isIn
+                  ? Text(
+                      "Time-in",
+                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    )
+                  : Text(
+                      "Time-out",
+                      style: TextStyle(color: Colors.blue),
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+}
