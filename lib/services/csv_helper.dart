@@ -13,18 +13,18 @@ class CsvHelper {
   static Future<EXPORT_RESULT> exportUserLog(
       {@required firstName,
       @required lastName,
-      @required int fromDate,
-      @required int toDate,
+      @required DateTime fromDate,
+      @required DateTime toDate,
       @required List<Log> logs}) async {
     EXPORT_RESULT result;
 
     final name = "$firstName$lastName";
-    final duration = (fromDate == toDate)
-        ? DateFormat("y-MMM-dd")
-            .format(DateTime.fromMillisecondsSinceEpoch(toDate))
-        : "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(fromDate))}" +
-            "_to_" +
-            "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(toDate))}";
+    final duration =
+        (fromDate.millisecondsSinceEpoch == toDate.millisecondsSinceEpoch)
+            ? DateFormat("d-MMM-y").format(toDate)
+            : "from_${DateFormat("d-MMM-y").format(fromDate)}" +
+                "_to_" +
+                "${DateFormat("d-MMM-y").format(toDate)}";
 
     final filename = "${name}_$duration.csv";
 

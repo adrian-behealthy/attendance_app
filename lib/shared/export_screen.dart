@@ -10,6 +10,7 @@ class ExportScreen extends StatefulWidget {
   final lastName;
   final fromDate;
   final toDate;
+
   final logs;
 
   const ExportScreen(
@@ -131,8 +132,8 @@ class _ExportScreenState extends State<ExportScreen> {
     return await CsvHelper.exportUserLog(
         firstName: widget.logs.first.firstName,
         lastName: widget.logs.first.lastName,
-        fromDate: widget.fromDate.millisecondsSinceEpoch,
-        toDate: widget.toDate.millisecondsSinceEpoch,
+        fromDate: widget.fromDate,
+        toDate: widget.toDate,
         logs: widget.logs);
   }
 
@@ -140,8 +141,8 @@ class _ExportScreenState extends State<ExportScreen> {
     return await PdfHelper.exportUserLogPDF(
         firstName: widget.logs.first.firstName,
         lastName: widget.logs.first.lastName,
-        fromDate: widget.fromDate.millisecondsSinceEpoch,
-        toDate: widget.toDate.millisecondsSinceEpoch,
+        fromDate: widget.fromDate,
+        toDate: widget.toDate,
         logs: widget.logs);
   }
 }

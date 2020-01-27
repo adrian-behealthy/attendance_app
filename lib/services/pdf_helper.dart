@@ -12,18 +12,18 @@ class PdfHelper {
   static Future<EXPORT_RESULT> exportUserLogPDF(
       {@required firstName,
       @required lastName,
-      @required int fromDate,
-      @required int toDate,
+      @required DateTime fromDate,
+      @required DateTime toDate,
       @required List<Log> logs}) async {
     EXPORT_RESULT result;
 
     final name = "$firstName$lastName";
-    final duration = (fromDate == toDate)
-        ? DateFormat("y-MMM-dd")
-            .format(DateTime.fromMillisecondsSinceEpoch(toDate))
-        : "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(fromDate*1000))}" +
-            "_to_" +
-            "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(toDate*1000))}";
+    final duration =
+        (fromDate.millisecondsSinceEpoch == toDate.millisecondsSinceEpoch)
+            ? DateFormat("d-MMM-y").format(toDate)
+            : "from_${DateFormat("d-MMM-y").format(fromDate)}" +
+                "_to_" +
+                "${DateFormat("d-MMM-y").format(toDate)}";
 
     final filename = "${name}_$duration.pdf";
 
@@ -58,51 +58,50 @@ class PdfHelper {
       rows.add(row);
     }
 
-    pdf.addPage(MultiPage(
-        pageFormat:
-            PdfPageFormat.letter.copyWith(marginBottom: 1.5 * PdfPageFormat.cm),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        header: (Context context) {
-          if (context.pageNumber == 1) {
-            return null;
-          }
-          return Container(
-              alignment: Alignment.centerRight,
-              margin: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
-              padding: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
-              decoration: const BoxDecoration(
-                  border: BoxBorder(
-                      bottom: true, width: 0.5, color: PdfColors.grey)),
-              child: Text(
-                  '$firstName $lastName Attendance logs from $fromDate to $toDate',
-                  style: Theme.of(context)
-                      .defaultTextStyle
-                      .copyWith(color: PdfColors.grey)));
-        },
-        footer: (Context context) {
-          return Container(
-              alignment: Alignment.centerRight,
-              margin: const EdgeInsets.only(top: 1.0 * PdfPageFormat.cm),
-              child: Text('Page ${context.pageNumber} of ${context.pagesCount}',
-                  style: Theme.of(context)
-                      .defaultTextStyle
-                      .copyWith(color: PdfColors.grey)));
-        },
-        build: (Context context) => <Widget>[
-              Header(
-                  level: 0,
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                            '$firstName $lastName ' +
-                                'Attenance Logs from ' +
-                                '${DateFormat("d-MMM-y").format(DateTime.fromMillisecondsSinceEpoch(fromDate * 1000))}' +
-                                ' to ' +
-                                '${DateFormat("d-MMM-y").format(DateTime.fromMillisecondsSinceEpoch(toDate * 1000))}',
-                            textScaleFactor: 1),
-                        PdfLogo()
-                      ])),
+    pdf.addPage(
+      MultiPage(
+          pageFormat: PdfPageFormat.letter
+              .copyWith(marginBottom: 1.5 * PdfPageFormat.cm),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          header: (Context context) {
+            if (context.pageNumber == 1) {
+              return null;
+            }
+            return Container(
+                alignment: Alignment.centerRight,
+                margin: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
+                padding: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
+                decoration: const BoxDecoration(
+                    border: BoxBorder(
+                        bottom: true, width: 0.5, color: PdfColors.grey)),
+                child: Text(
+                    '$firstName $lastName Attendance logs from $fromDate to $toDate',
+                    style: Theme.of(context)
+                        .defaultTextStyle
+                        .copyWith(color: PdfColors.grey)));
+          },
+          footer: (Context context) {
+            return Container(
+                alignment: Alignment.centerRight,
+                margin: const EdgeInsets.only(top: 1.0 * PdfPageFormat.cm),
+                child: Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: Theme.of(context)
+                        .defaultTextStyle
+                        .copyWith(color: PdfColors.grey)));
+          },
+          build: (Context context) => <Widget>[
+                Header(
+                    level: 0,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                              '$firstName $lastName ' +
+                                  'Attendance Logs $duration',
+                              textScaleFactor: 1),
+                          PdfLogo()
+                        ])),
 //          Paragraph(
 //              text:
 //              'The Portable Document Format (PDF) is a file format developed by Adobe in the 1990s to present documents, including text formatting and images, in a manner independent of application software, hardware, and operating systems. Based on the PostScript language, each PDF file encapsulates a complete description of a fixed-layout flat document, including the text, fonts, vector graphics, raster images and other information needed to display it. PDF was standardized as an open format, ISO 32000, in 2008, and no longer requires any royalties for its implementation.'),
@@ -184,8 +183,8 @@ class PdfHelper {
 //              text:
 //              'The PDF file format has changed several times, and continues to evolve, along with the release of new versions of Adobe Acrobat. There have been nine versions of PDF and the corresponding version of the software:'),
 
-              Table.fromTextArray(context: context, data: <List<String>>[
-                ...rows,
+                Table.fromTextArray(context: context, data: <List<String>>[
+                  ...rows,
 
 //            <String>['Date', 'PDF Version', 'Acrobat Version'],
 //            <String>['1993', 'PDF 1.0', 'Acrobat 1'],
@@ -201,12 +200,12 @@ class PdfHelper {
 //            <String>['2010', 'PDF 1.7', 'Acrobat X'],
 //            <String>['2012', 'PDF 1.7', 'Acrobat XI'],
 //            <String>['2017', 'PDF 2.0', 'Acrobat DC'],
-              ]),
+                ]),
 //              Padding(padding: const EdgeInsets.all(10)),
 //              Paragraph(
 //                  text:
 //                      'Text is available under the Creative Commons Attribution Share Alike License.')
-            ]),
+              ]),
     );
 
     String dir = "";
