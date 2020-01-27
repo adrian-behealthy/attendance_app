@@ -1,16 +1,25 @@
+import 'package:attendance_app/models/log.dart';
+import 'package:attendance_app/services/csv_helper.dart';
 import 'package:attendance_app/shared/enums.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 enum _FileFormat { CSV_FORMAT, PDF_FORMAT }
 
-class ExportTodayUsersLogsScreenScreen extends StatefulWidget {
+class ExportParticularDateLogsScreen extends StatefulWidget {
+  final DateTime date;
+  final List<Log> logs;
+
+  const ExportParticularDateLogsScreen({Key key, this.date, this.logs})
+      : super(key: key);
+
   @override
-  _ExportTodayUsersLogsScreenScreenState createState() =>
-      _ExportTodayUsersLogsScreenScreenState();
+  _ExportParticularDateLogsScreenState createState() =>
+      _ExportParticularDateLogsScreenState();
 }
 
-class _ExportTodayUsersLogsScreenScreenState
-    extends State<ExportTodayUsersLogsScreenScreen> {
+class _ExportParticularDateLogsScreenState
+    extends State<ExportParticularDateLogsScreen> {
   _FileFormat _fileFormat = _FileFormat.CSV_FORMAT;
 
   @override
@@ -25,10 +34,19 @@ class _ExportTodayUsersLogsScreenScreenState
             children: <Widget>[
               Text(
                 "Export screen",
-                style: Theme.of(context)
-                    .primaryTextTheme
-                    .headline
-                    .copyWith(color: Theme.of(context).primaryColor),
+                style: Theme.of(context).primaryTextTheme.headline.copyWith(
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+              Text(
+                "Logs for ${DateFormat('MMMM d, y').format(widget.date)}",
+                style: Theme.of(context).primaryTextTheme.title.copyWith(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               SizedBox(
                 height: 20.0,
@@ -87,7 +105,9 @@ class _ExportTodayUsersLogsScreenScreenState
                       if (_fileFormat == _FileFormat.CSV_FORMAT) {
                         result = await _exportLogsCSV();
                       } else {
-                        result = await _exportLogsPDF();
+                        //TODO implement export of pdf
+                        result = EXPORT_RESULT.CANCELED_EXPORT;
+//                        result = await _exportLogsPDF();
                       }
                       if (result != EXPORT_RESULT.FAILED_CSV ||
                           result != EXPORT_RESULT.FAILED_PDF) {
@@ -112,7 +132,10 @@ class _ExportTodayUsersLogsScreenScreenState
     );
   }
 
-  _exportLogsCSV() {}
+  _exportLogsCSV() async {
+    return await CsvHelper.exportParticularDateLog(
+        date: widget.date, logs: widget.logs);
+  }
 
   _exportLogsPDF() {}
 }

@@ -1,7 +1,5 @@
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/services/constants.dart';
-import 'package:attendance_app/services/csv_helper.dart';
-import 'package:attendance_app/services/pdf_helper.dart';
 import 'package:attendance_app/services/log_db_helper_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -86,7 +84,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   @override
   Widget build(BuildContext context) {
     _updateDateRange();
-    print(toDate);
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
