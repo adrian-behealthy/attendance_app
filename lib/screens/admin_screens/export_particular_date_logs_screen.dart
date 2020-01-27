@@ -1,5 +1,6 @@
 import 'package:attendance_app/models/log.dart';
 import 'package:attendance_app/services/csv_helper.dart';
+import 'package:attendance_app/services/pdf_helper.dart';
 import 'package:attendance_app/shared/enums.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -105,9 +106,7 @@ class _ExportParticularDateLogsScreenState
                       if (_fileFormat == _FileFormat.CSV_FORMAT) {
                         result = await _exportLogsCSV();
                       } else {
-                        //TODO implement export of pdf
-                        result = EXPORT_RESULT.CANCELED_EXPORT;
-//                        result = await _exportLogsPDF();
+                        result = await _exportLogsPDF();
                       }
                       if (result != EXPORT_RESULT.FAILED_CSV ||
                           result != EXPORT_RESULT.FAILED_PDF) {
@@ -137,5 +136,8 @@ class _ExportParticularDateLogsScreenState
         date: widget.date, logs: widget.logs);
   }
 
-  _exportLogsPDF() {}
+  _exportLogsPDF() async {
+    return await PdfHelper.exportParticularDatePDF(
+        date: widget.date, logs: widget.logs);
+  }
 }

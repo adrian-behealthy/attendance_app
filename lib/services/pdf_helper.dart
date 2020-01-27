@@ -215,7 +215,127 @@ class PdfHelper {
           "/documents/attendace";
     } catch (e) {
       print(e);
-      return EXPORT_RESULT.FAILED_CSV;
+      return EXPORT_RESULT.FAILED_PDF;
+    }
+    final attendanceDir = new Directory(dir);
+    bool isThere = await attendanceDir.exists();
+    if (!isThere) {
+      attendanceDir.create(recursive: true);
+    }
+    File f;
+    try {
+      f = new File(dir + "/$filename");
+    } catch (e) {
+      print(e);
+      return EXPORT_RESULT.FAILED_PDF;
+    }
+
+//    final File file = File('example.pdf');
+    f.writeAsBytesSync(pdf.save());
+
+    return EXPORT_RESULT.SUCCESS_PDF;
+  }
+
+  static Future<EXPORT_RESULT> exportParticularDatePDF(
+      {@required DateTime date, @required List<Log> logs}) async {
+    EXPORT_RESULT result;
+
+    final filename = "All_logs_${DateFormat("dMMMMy").format(date)}.pdf";
+
+    final Document pdf = Document();
+
+    List<String> titles = [
+      "Date",
+      "Time",
+      "Name",
+      "Firstname",
+      "Lastname",
+      "Project",
+      "In/Out",
+      "Longitude",
+      "Latitude",
+      "Comment",
+    ];
+
+    List<List<String>> rows = [titles];
+    for (Log log in logs) {
+      var date = DateFormat("y-MMM-dd").format(
+          DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
+      var time = DateFormat("hh:mm a").format(
+          DateTime.fromMillisecondsSinceEpoch(log.secondsSinceEpoch * 1000));
+
+      List<String> row = [];
+      row.add(date);
+      row.add(time);
+      row.add("${log.firstName} ${log.lastName}");
+      row.add("${log.firstName}");
+      row.add("${log.lastName}");
+      row.add(log.projectName);
+      row.add(log.isIn ? "Time-in" : "Time-out");
+      row.add("${log.lat}");
+      row.add("${log.lng}");
+      row.add(log.comment);
+      // add to rows
+      rows.add(row);
+    }
+
+    pdf.addPage(
+      MultiPage(
+          pageFormat: PdfPageFormat.letter
+              .copyWith(marginBottom: 1 * PdfPageFormat.cm),
+          crossAxisAlignment: CrossAxisAlignment.start,orientation: PageOrientation.landscape,
+          header: (Context context) {
+            if (context.pageNumber == 1) {
+              return null;
+            }
+            return Container(
+                alignment: Alignment.centerRight,
+                margin: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
+                padding: const EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
+                decoration: const BoxDecoration(
+                    border: BoxBorder(
+                        bottom: true, width: 0.5, color: PdfColors.grey)),
+                child: Text(
+                    'Attendance logs on ${DateFormat('d MMMM,y').format(date)}',
+                    style: Theme.of(context)
+                        .defaultTextStyle
+                        .copyWith(color: PdfColors.grey)));
+          },
+          footer: (Context context) {
+            return Container(
+                alignment: Alignment.centerRight,
+                margin: const EdgeInsets.only(top: 1.0 * PdfPageFormat.cm),
+                child: Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: Theme.of(context)
+                        .defaultTextStyle
+                        .copyWith(color: PdfColors.grey)));
+          },
+          build: (Context context) => <Widget>[
+                Header(
+                    level: 0,
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                              'Attendance logs on ${DateFormat('d MMMM,y').format(date)}',
+                              textScaleFactor: 1),
+//                          PdfLogo()
+                        ])),
+                Table.fromTextArray(context: context, data: <List<String>>[
+                  ...rows,
+                ]),
+              ]),
+    );
+
+    String dir = "";
+
+    try {
+      dir = (await getExternalStorageDirectory()).absolute.path +
+          "/documents/attendance/particular_date";
+    } catch (e) {
+      print(e);
+      return EXPORT_RESULT.FAILED_PDF;
     }
     final attendanceDir = new Directory(dir);
     bool isThere = await attendanceDir.exists();
