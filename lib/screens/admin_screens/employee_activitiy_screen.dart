@@ -7,8 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
 import 'package:attendance_app/shared/enums.dart';
-
-enum _FileFormat { CSV_FORMAT, PDF_FORMAT }
+import 'package:attendance_app/shared/export_screen.dart';
 
 class EmployeeActivityScreen extends StatefulWidget {
   final String uid;
@@ -31,7 +30,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   DateTime dayAfter;
   DateTime fromDate;
   DateTime toDate;
-  _FileFormat _fileFormat = _FileFormat.CSV_FORMAT;
 
   List<Log> logs = [];
 
@@ -221,7 +219,16 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
                             ? null
                             : FlatButton.icon(
                                 onPressed: () async {
-                                  EXPORT_RESULT result = await _showDialog();
+                                  EXPORT_RESULT result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ExportScreen(
+                                                firstName: logs.first.firstName,
+                                                lastName: logs.first.lastName,
+                                                logs: logs,
+                                                fromDate: fromDate,
+                                                toDate: toDate,
+                                              )));
 
                                   String exportMsg = "";
                                   Color snackbarColor = Colors.blue;
@@ -352,107 +359,6 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Future<EXPORT_RESULT> _exportUserLogCSV() async {
-    return await CsvHelper.exportUserLog(
-        firstName: logs.first.firstName,
-        lastName: logs.first.lastName,
-        fromDate: fromDate.millisecondsSinceEpoch,
-        toDate: toDate.millisecondsSinceEpoch,
-        logs: logs);
-  }
-
-  String test = "";
-
-  Future<EXPORT_RESULT> _showDialog() async {
-    return await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (builder) {
-        return AlertDialog(
-          title: Text("Export dialog"),
-          content: Wrap(
-            children: <Widget>[
-              Text("Choose file format"),
-              Row(
-                children: <Widget>[
-                  Radio(
-                    value: _FileFormat.CSV_FORMAT,
-                    groupValue: _fileFormat,
-                    autofocus: true,
-                    onChanged: (_FileFormat val) => setState(
-                      () {
-                        _fileFormat = val;
-                      },
-                    ),
-                  ),
-                  Text("CSV format"),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Radio(
-                    value: _FileFormat.PDF_FORMAT,
-                    groupValue: _fileFormat,
-                    autofocus: true,
-                    onChanged: (_FileFormat val) => setState(() {
-                      _fileFormat = val;
-                    }),
-                  ),
-                  Text("PDF format"),
-                ],
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            RaisedButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                Navigator.pop(context, EXPORT_RESULT.CANCELED_EXPORT);
-              },
-            ),
-            RaisedButton(
-              child: Text(
-                "Export",
-              ),
-              onPressed: () async {
-                EXPORT_RESULT result = EXPORT_RESULT.CANCELED_EXPORT;
-                print("pressed");
-                if (_fileFormat == _FileFormat.CSV_FORMAT) {
-                  result = await _exportUserLogCSV();
-                } else {
-                  result = await PdfHelper.exportUserLogPDF(
-                      firstName: logs.first.firstName,
-                      lastName: logs.first.lastName,
-                      fromDate: fromDate.millisecondsSinceEpoch,
-                      toDate: toDate.millisecondsSinceEpoch,
-                      logs: logs);
-                }
-                if (result != EXPORT_RESULT.FAILED_CSV ||
-                    result != EXPORT_RESULT.FAILED_PDF) {
-                  Navigator.pop(context, result);
-                } else {
-                  _scaffoldKey.currentState.removeCurrentSnackBar();
-                  _scaffoldKey.currentState.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Export failed",
-                        textAlign: TextAlign.center,
-                      ),
-                      duration: Duration(seconds: 3),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                }
-                return result;
-              },
-              color: Colors.redAccent,
-            ),
-          ],
-        );
-      },
     );
   }
 }

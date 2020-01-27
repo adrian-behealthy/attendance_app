@@ -21,9 +21,9 @@ class PdfHelper {
     final duration = (fromDate == toDate)
         ? DateFormat("y-MMM-dd")
             .format(DateTime.fromMillisecondsSinceEpoch(toDate))
-        : "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(fromDate))}" +
+        : "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(fromDate*1000))}" +
             "_to_" +
-            "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(toDate))}";
+            "${DateFormat("y-MMM-dd").format(DateTime.fromMillisecondsSinceEpoch(toDate*1000))}";
 
     final filename = "${name}_$duration.pdf";
 
