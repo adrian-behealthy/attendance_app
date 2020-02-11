@@ -25,7 +25,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   DateTime _currentTime = DateTime.now();
   int fromDateSinceEpoch;
   int toDateSinceEpoch;
-  DateTime dayAfter;
+  DateTime aSecondBeforeDayAfter;
   DateTime fromDate;
   DateTime toDate;
 
@@ -33,13 +33,15 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
 
   @override
   void initState() {
-    fromDate = DateTime.parse(DateFormat("y-MM-dd").format(_currentTime));
-    fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
-    dayAfter = _currentTime.add(Duration(days: 1));
+    setState(() {
+      fromDate = DateTime.parse(DateFormat("y-MM-dd").format(_currentTime));
+      fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
+      aSecondBeforeDayAfter = fromDate.add(Duration(days: 1)).subtract(Duration(seconds: 1));
 
-    toDate = DateTime.parse(DateFormat("y-MM-dd").format(dayAfter));
+      toDate = DateTime.parse(DateFormat("y-MM-dd").format(aSecondBeforeDayAfter));
 
-    toDateSinceEpoch = (toDate.millisecondsSinceEpoch / 1000).floor();
+      toDateSinceEpoch = (toDate.millisecondsSinceEpoch / 1000).floor();
+    });
     super.initState();
   }
 
@@ -51,6 +53,7 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
   _updateDateRange() {
     setState(() {
       if (fromDate == null) {
+        fromDate = DateTime.parse(DateFormat("y-MM-dd").format(fromDate));
         _fbKey.currentState.setState(() => _fbKey.currentState
             .setAttributeValue("from_date",
                 DateTime.now().subtract(Duration(days: MAX_DAYS_BACKWARD))));
@@ -67,18 +70,16 @@ class _EmployeeActivityScreenState extends State<EmployeeActivityScreen> {
           toDate = DateTime.now().add(Duration(days: 1));
         });
       }
-      fromDateSinceEpoch = (DateFormat("y-mm-dd")
-                  .parse(fromDate.toIso8601String())
-                  .millisecondsSinceEpoch /
-              1000)
-          .floor();
-      dayAfter = toDate.add(Duration(days: 1));
-      toDateSinceEpoch = (DateFormat("y-mm-dd")
-                  .parse(dayAfter.toIso8601String())
-                  .millisecondsSinceEpoch /
-              1000)
-          .floor();
+      fromDateSinceEpoch = (fromDate.millisecondsSinceEpoch / 1000).floor();
+      toDate = DateTime.parse(DateFormat("y-MM-dd").format(toDate));
+
+      aSecondBeforeDayAfter = toDate.add(Duration(days: 1)).subtract(Duration(seconds: 1));
+      toDate = aSecondBeforeDayAfter;
+
+      toDateSinceEpoch = (toDate.millisecondsSinceEpoch / 1000).floor();
     });
+    print("fromdate $fromDate");
+    print("dayafter ${aSecondBeforeDayAfter}");
   }
 
   @override

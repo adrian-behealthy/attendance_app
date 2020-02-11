@@ -12,7 +12,6 @@ class EmployeeTimeList extends StatefulWidget {
 class _EmployeeTimeListState extends State<EmployeeTimeList> {
   String errorMsg = "";
   UserFilter _userFilter = UserFilter.AllActiveNonAdminUsers;
-  bool isDay = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,46 +26,33 @@ class _EmployeeTimeListState extends State<EmployeeTimeList> {
             SizedBox(
               height: 10.0,
             ),
-            !isDay ? _filterDropdown() : Container(),
-            Row(
-              children: <Widget>[
-                Text("Particular date"),
-                Switch(
-                    value: isDay,
-                    onChanged: (val) {
-                      setState(() {
-                        isDay = !isDay;
-                      });
-                    }),
-              ],
+            _filterDropdown() ,
+            InkWell(
+              child: Card(
+                child: FlatButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                DayLogActivityScreen()));
+                  },
+                  icon: Icon(
+                    Icons.view_day,
+                    color: Colors.blue,
+                  ),
+                  label: Text("View particular date logs",
+                      style: TextStyle(
+                        color: Colors.blue,
+                      )),
+                ),
+              ),
             ),
             SizedBox(
               height: 20.0,
             ),
             Expanded(
-              child: isDay
-                  ? Center(
-                    child: InkWell(
-                        child: FlatButton.icon(
-                          onPressed: () async {
-                            await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        DayLogActivityScreen()));
-                          },
-                          icon: Icon(
-                            Icons.view_day,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                          label: Text("View particular date logs",
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                              )),
-                        ),
-                      ),
-                  )
-                  : StreamBuilder(
+              child: StreamBuilder(
                       stream:
                           Firestore.instance.collection("users").snapshots(),
                       builder: (context, snapshot) {
